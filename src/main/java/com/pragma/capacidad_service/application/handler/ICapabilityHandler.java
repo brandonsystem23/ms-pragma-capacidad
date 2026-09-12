@@ -1,0 +1,11 @@
+package com.pragma.capacidad_service.application.handler;
+
+import com.pragma.capacidad_service.application.dto.request.CapabilityRequest;
+import com.pragma.capacidad_service.application.dto.response.CapabilityResponse;
+import reactor.core.publisher.Mono;
+
+public interface ICapabilityHandler {
+
+    Mono<CapabilityResponse> create(CapabilityRequest request, String token);
+
+}

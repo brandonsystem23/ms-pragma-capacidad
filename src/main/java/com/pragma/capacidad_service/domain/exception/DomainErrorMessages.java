@@ -13,4 +13,8 @@ public final class DomainErrorMessages {
     public static final String REPEATED_TECHNOLOGY = "No puede exisitir tecnologias repetidas";
     public static final String TECHNOLOGIES_IDS_REQUIRED = "La lista de tecnologias es obligatoria";
     public static final String TECHNOLOGY_NOT_FOUND = "Alguna de las tecnologias ingresadas no existe";
+    public static final String INVALID_PAGE = "El parámetro page debe ser mayor o igual a 0";
+    public static final String INVALID_SIZE = "El parámetro size debe ser mayor a 0";
+    public static final String INVALID_SORT_BY = "El parámetro sortBy solo permite: name, numberTechnologies";
+    public static final String INVALID_DIRECTION = "El parámetro direction solo permite: asc, desc";
 }

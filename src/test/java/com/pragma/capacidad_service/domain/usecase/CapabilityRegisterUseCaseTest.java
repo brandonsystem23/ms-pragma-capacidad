@@ -1,7 +1,7 @@
 package com.pragma.capacidad_service.domain.usecase;
 
 import com.pragma.capacidad_service.domain.model.Capability;
-import com.pragma.capacidad_service.domain.model.CapabilityCommand;
+import com.pragma.capacidad_service.domain.model.command.CapabilityCommand;
 import com.pragma.capacidad_service.domain.spi.ICapabilityPersistencePort;
 import com.pragma.capacidad_service.domain.validation.capability.CapabilityValidator;
 import com.pragma.capacidad_service.domain.validation.capability.DomainCapabilityValidator;

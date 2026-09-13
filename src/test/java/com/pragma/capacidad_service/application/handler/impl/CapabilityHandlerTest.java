@@ -1,11 +1,17 @@
 package com.pragma.capacidad_service.application.handler.impl;
 
 import com.pragma.capacidad_service.application.dto.request.CapabilityRequest;
+import com.pragma.capacidad_service.application.dto.response.CapabilityListItemResponse;
 import com.pragma.capacidad_service.application.dto.response.CapabilityResponse;
+import com.pragma.capacidad_service.application.dto.response.TechnologyBasicResponse;
 import com.pragma.capacidad_service.application.mapper.CapabilityDtoMapper;
 import com.pragma.capacidad_service.domain.api.ICapabilityRegisterServicePort;
+import com.pragma.capacidad_service.domain.api.ICapabilityRetrieveServicePort;
 import com.pragma.capacidad_service.domain.model.Capability;
-import com.pragma.capacidad_service.domain.model.CapabilityCommand;
+import com.pragma.capacidad_service.domain.model.PagedResult;
+import com.pragma.capacidad_service.domain.model.Technology;
+import com.pragma.capacidad_service.domain.model.command.CapabilityCommand;
+import com.pragma.capacidad_service.domain.model.command.CapabilityPageCommand;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,7 +31,11 @@ class CapabilityHandlerTest {
     private ICapabilityRegisterServicePort iCapabilityRegisterServicePort;
 
     @Mock
+    private ICapabilityRetrieveServicePort iCapabilityRetrieveServicePort;
+
+    @Mock
     private CapabilityDtoMapper capabilityDtoMapper;
+
 
     @InjectMocks
     private CapabilityHandler capabilityHandler;
@@ -107,4 +117,83 @@ class CapabilityHandlerTest {
                 )
                 .verify();
     }
+
+    @Test
+    void shouldGetCapabilitiesAndMapPagedResponse() {
+        String token = "token";
+
+        Capability capability = Capability.builder()
+                .id(1L)
+                .name("Backend")
+                .description("Capacidad backend")
+                .technologies(List.of(
+                        Technology.builder().id(1L).name("Java").build(),
+                        Technology.builder().id(2L).name("Spring").build()
+                ))
+                .build();
+
+        PagedResult<Capability> pagedResult = PagedResult.<Capability>builder()
+                .content(List.of(capability))
+                .page(0)
+                .size(10)
+                .totalElements(1)
+                .totalPages(1)
+                .first(true)
+                .last(true)
+                .build();
+
+        CapabilityListItemResponse itemResponse = CapabilityListItemResponse.builder()
+                .id(1L)
+                .name("Backend")
+                .description("Capacidad backend")
+                .technologies(List.of(
+                        TechnologyBasicResponse.builder().id(1L).name("Java").build(),
+                        TechnologyBasicResponse.builder().id(2L).name("Spring").build()
+                ))
+                .build();
+
+        when(iCapabilityRetrieveServicePort.getCapabilities(
+                new CapabilityPageCommand(0, 10, "name", "asc"),
+                token
+        )).thenReturn(Mono.just(pagedResult));
+
+        when(capabilityDtoMapper.toListItemResponse(capability))
+                .thenReturn(itemResponse);
+
+        StepVerifier.create(
+                        capabilityHandler.getCapabilities(0, 10, "name", "asc", token)
+                )
+                .assertNext(response -> {
+                    org.junit.jupiter.api.Assertions.assertEquals(1, response.content().size());
+                    org.junit.jupiter.api.Assertions.assertEquals(0, response.page());
+                    org.junit.jupiter.api.Assertions.assertEquals(10, response.size());
+                    org.junit.jupiter.api.Assertions.assertEquals(1, response.totalElements());
+                    org.junit.jupiter.api.Assertions.assertEquals(1, response.totalPages());
+                    org.junit.jupiter.api.Assertions.assertTrue(response.first());
+                    org.junit.jupiter.api.Assertions.assertTrue(response.last());
+                    org.junit.jupiter.api.Assertions.assertEquals("Backend", response.content().get(0).name());
+                    org.junit.jupiter.api.Assertions.assertEquals(2, response.content().get(0).technologies().size());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldPropagateErrorWhenGetCapabilitiesFails() {
+        String token = "token";
+
+        when(iCapabilityRetrieveServicePort.getCapabilities(
+                new CapabilityPageCommand(0, 10, "name", "asc"),
+                token
+        )).thenReturn(Mono.error(new RuntimeException("error listando capacidades")));
+
+        StepVerifier.create(
+                        capabilityHandler.getCapabilities(0, 10, "name", "asc", token)
+                )
+                .expectErrorMatches(error ->
+                        error instanceof RuntimeException &&
+                                error.getMessage().equals("error listando capacidades")
+                )
+                .verify();
+    }
+
 }

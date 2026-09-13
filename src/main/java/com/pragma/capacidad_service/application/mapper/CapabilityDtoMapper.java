@@ -1,9 +1,12 @@
 package com.pragma.capacidad_service.application.mapper;
 
 import com.pragma.capacidad_service.application.dto.request.CapabilityRequest;
+import com.pragma.capacidad_service.application.dto.response.CapabilityListItemResponse;
 import com.pragma.capacidad_service.application.dto.response.CapabilityResponse;
+import com.pragma.capacidad_service.application.dto.response.TechnologyBasicResponse;
 import com.pragma.capacidad_service.domain.model.Capability;
-import com.pragma.capacidad_service.domain.model.CapabilityCommand;
+import com.pragma.capacidad_service.domain.model.Technology;
+import com.pragma.capacidad_service.domain.model.command.CapabilityCommand;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -17,4 +20,8 @@ public interface CapabilityDtoMapper {
             expression = "java(capability.getTechnologies() != null ? capability.getTechnologies().size() : 0L)"
     )
     CapabilityResponse toResponse(Capability capability);
+
+    CapabilityListItemResponse toListItemResponse(Capability capability);
+
+    TechnologyBasicResponse toTechnologyBasicResponse(Technology technology);
 }

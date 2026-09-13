@@ -2,6 +2,7 @@ package com.pragma.capacidad_service.infrastructure.input.rest;
 
 import com.pragma.capacidad_service.application.dto.request.CapabilityRequest;
 import com.pragma.capacidad_service.application.dto.response.CapabilityResponse;
+import com.pragma.capacidad_service.application.dto.response.PagedCapabilityResponse;
 import com.pragma.capacidad_service.application.handler.ICapabilityHandler;
 import com.pragma.capacidad_service.infrastructure.util.UtilTokenExtractor;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,5 +35,22 @@ public class CapabilityController {
 
         return iCapabilityHandler.create(request, token);
     }
+
+    @GetMapping("/list")
+    @Operation(summary = "Listar capacidades", description = "Listar capacidades paginadas. Requiere rol ADMINISTRADOR")
+    public Mono<PagedCapabilityResponse> getCapabilities(
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "name") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction
+    ) {
+        log.info("Solicitud para listar capacidades");
+
+        String token = UtilTokenExtractor.extract(authorizationHeader);
+
+        return iCapabilityHandler.getCapabilities(page, size, sortBy, direction, token);
+    }
+
 
 }

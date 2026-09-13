@@ -1,7 +1,10 @@
 package com.pragma.capacidad_service.infrastructure.input.rest;
 
 import com.pragma.capacidad_service.application.dto.request.CapabilityRequest;
+import com.pragma.capacidad_service.application.dto.response.CapabilityListItemResponse;
 import com.pragma.capacidad_service.application.dto.response.CapabilityResponse;
+import com.pragma.capacidad_service.application.dto.response.PagedCapabilityResponse;
+import com.pragma.capacidad_service.application.dto.response.TechnologyBasicResponse;
 import com.pragma.capacidad_service.application.handler.ICapabilityHandler;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -124,4 +127,74 @@ class CapabilityControllerTest {
 
         verify(iCapabilityHandler).create(request, token);
     }
+
+    @Test
+    void shouldGetCapabilitiesSuccessfully() {
+        String authorizationHeader = "Bearer token";
+        String token = "token";
+
+        PagedCapabilityResponse response = PagedCapabilityResponse.builder()
+                .content(java.util.List.of(
+                        CapabilityListItemResponse.builder()
+                                .id(1L)
+                                .name("Backend")
+                                .description("Capacidad backend")
+                                .technologies(java.util.List.of(
+                                        TechnologyBasicResponse.builder().id(1L).name("Java").build(),
+                                        TechnologyBasicResponse.builder().id(2L).name("Spring").build()
+                                ))
+                                .build()
+                ))
+                .page(0)
+                .size(10)
+                .totalElements(1)
+                .totalPages(1)
+                .first(true)
+                .last(true)
+                .build();
+
+        when(iCapabilityHandler.getCapabilities(0, 10, "name", "asc", token))
+                .thenReturn(Mono.just(response));
+
+        StepVerifier.create(
+                        capabilityController.getCapabilities(
+                                authorizationHeader,
+                                0,
+                                10,
+                                "name",
+                                "asc"
+                        )
+                )
+                .expectNext(response)
+                .verifyComplete();
+
+        verify(iCapabilityHandler).getCapabilities(0, 10, "name", "asc", token);
+    }
+
+    @Test
+    void shouldPropagateErrorWhenGetCapabilitiesFails() {
+        String authorizationHeader = "Bearer token";
+        String token = "token";
+
+        when(iCapabilityHandler.getCapabilities(0, 10, "name", "asc", token))
+                .thenReturn(Mono.error(new RuntimeException("error listando capacidades")));
+
+        StepVerifier.create(
+                        capabilityController.getCapabilities(
+                                authorizationHeader,
+                                0,
+                                10,
+                                "name",
+                                "asc"
+                        )
+                )
+                .expectErrorMatches(error ->
+                        error instanceof RuntimeException &&
+                                error.getMessage().equals("error listando capacidades")
+                )
+                .verify();
+
+        verify(iCapabilityHandler).getCapabilities(0, 10, "name", "asc", token);
+    }
+
 }

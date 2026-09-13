@@ -54,10 +54,20 @@ public class GlobalExceptionHandler {
 
     private HttpStatus mapStatus(DomainErrorCode code) {
         return switch (code) {
-            case VALIDATION_ERROR, TECHNOLOGY_NOT_FOUNT, DUPLICATE_NAME -> HttpStatus.BAD_REQUEST;
+            case VALIDATION_ERROR,
+                 TECHNOLOGY_NOT_FOUNT,
+                 DUPLICATE_NAME,
+                 INVALID_PAGE,
+                 INVALID_SIZE,
+                 INVALID_SORT_BY,
+                 INVALID_DIRECTION -> HttpStatus.BAD_REQUEST;
+
             case INVALID_TOKEN -> HttpStatus.UNAUTHORIZED;
+
             case ACCESS_DENIED -> HttpStatus.FORBIDDEN;
+
             case EXTERNAL_SERVICE_ERROR -> HttpStatus.BAD_GATEWAY;
+
             case INTERNAL_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
     }

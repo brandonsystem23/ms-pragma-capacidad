@@ -1,5 +1,6 @@
 package com.pragma.capacidad_service.infrastructure.out.webclient.adapter;
 
+import com.pragma.capacidad_service.domain.model.Technology;
 import com.pragma.capacidad_service.infrastructure.exception.ExternalServiceException;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -31,7 +32,8 @@ class TechnologyWebClientAdapterTest {
 
         technologyWebClientAdapter = new TechnologyWebClientAdapter(
                 technologyWebClient,
-                "/api/v1/technology/exists-by-ids"
+                "/api/v1/technology/exists-by-ids",
+                "/api/v1/technology/by-ids"
         );
     }
 
@@ -54,20 +56,18 @@ class TechnologyWebClientAdapterTest {
                                 """)
         );
 
-        List<Long> technologyIds = List.of(1L, 2L, 3L);
-
         StepVerifier.create(
                         technologyWebClientAdapter.existsByIds(
-                                technologyIds,
+                                List.of(1L, 2L, 3L),
                                 "token"
                         )
                 )
-                .assertNext(existingIds -> {
-                    Assertions.assertEquals(
-                            List.of(1L, 2L, 3L),
-                            existingIds
-                    );
-                })
+                .assertNext(existingIds ->
+                        Assertions.assertEquals(
+                                List.of(1L, 2L, 3L),
+                                existingIds
+                        )
+                )
                 .verifyComplete();
     }
 
@@ -85,17 +85,76 @@ class TechnologyWebClientAdapterTest {
                                 """)
         );
 
-        List<Long> technologyIds = List.of(999L, 1000L);
-
         StepVerifier.create(
                         technologyWebClientAdapter.existsByIds(
-                                technologyIds,
+                                List.of(999L, 1000L),
                                 "token"
                         )
                 )
-                .assertNext(existingIds -> {
-                    Assertions.assertTrue(existingIds.isEmpty());
+                .assertNext(existingIds ->
+                        Assertions.assertTrue(existingIds.isEmpty())
+                )
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldFindTechnologiesByIdsSuccessfully() {
+
+        mockWebServer.enqueue(
+                new MockResponse()
+                        .setResponseCode(200)
+                        .addHeader("Content-Type", "application/json")
+                        .setBody("""
+                                [
+                                    {
+                                        "id": 1,
+                                        "name": "Java"
+                                    },
+                                    {
+                                        "id": 2,
+                                        "name": "Spring"
+                                    }
+                                ]
+                                """)
+        );
+
+        StepVerifier.create(
+                        technologyWebClientAdapter.findByIds(
+                                List.of(1L, 2L),
+                                "token"
+                        )
+                )
+                .assertNext(technologies -> {
+                    Assertions.assertEquals(2, technologies.size());
+
+                    Assertions.assertEquals(1L, technologies.get(0).getId());
+                    Assertions.assertEquals("Java", technologies.get(0).getName());
+
+                    Assertions.assertEquals(2L, technologies.get(1).getId());
+                    Assertions.assertEquals("Spring", technologies.get(1).getName());
                 })
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenNoTechnologiesFoundByIds() {
+
+        mockWebServer.enqueue(
+                new MockResponse()
+                        .setResponseCode(200)
+                        .addHeader("Content-Type", "application/json")
+                        .setBody("[]")
+        );
+
+        StepVerifier.create(
+                        technologyWebClientAdapter.findByIds(
+                                List.of(999L),
+                                "token"
+                        )
+                )
+                .assertNext(technologies ->
+                        Assertions.assertTrue(technologies.isEmpty())
+                )
                 .verifyComplete();
     }
 
@@ -241,6 +300,80 @@ class TechnologyWebClientAdapterTest {
                 .verify();
     }
 
+    @Test
+    void shouldReturnExternalServiceExceptionWhenFindByIdsClientErrorOccurs() {
+
+        enqueueErrorResponse(
+                400,
+                "Error consultando las tecnologías"
+        );
+
+        StepVerifier.create(
+                        technologyWebClientAdapter.findByIds(
+                                List.of(1L, 2L),
+                                "token"
+                        )
+                )
+                .expectErrorSatisfies(throwable -> {
+
+                    Assertions.assertInstanceOf(
+                            ExternalServiceException.class,
+                            throwable
+                    );
+
+                    ExternalServiceException exception =
+                            (ExternalServiceException) throwable;
+
+                    Assertions.assertEquals(
+                            HttpStatus.BAD_REQUEST,
+                            exception.getStatus()
+                    );
+
+                    Assertions.assertEquals(
+                            "Error consultando las tecnologías",
+                            exception.getMessage()
+                    );
+                })
+                .verify();
+    }
+
+    @Test
+    void shouldReturnExternalServiceExceptionWhenFindByIdsServerErrorOccurs() {
+
+        enqueueErrorResponse(
+                500,
+                "Error interno del servicio de tecnologías"
+        );
+
+        StepVerifier.create(
+                        technologyWebClientAdapter.findByIds(
+                                List.of(1L, 2L),
+                                "token"
+                        )
+                )
+                .expectErrorSatisfies(throwable -> {
+
+                    Assertions.assertInstanceOf(
+                            ExternalServiceException.class,
+                            throwable
+                    );
+
+                    ExternalServiceException exception =
+                            (ExternalServiceException) throwable;
+
+                    Assertions.assertEquals(
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            exception.getStatus()
+                    );
+
+                    Assertions.assertEquals(
+                            "Error interno del servicio de tecnologías",
+                            exception.getMessage()
+                    );
+                })
+                .verify();
+    }
+
     private void enqueueErrorResponse(
             int statusCode,
             String body
@@ -253,13 +386,13 @@ class TechnologyWebClientAdapterTest {
 
             if (body != null) {
                 response.addHeader(
-                                "Content-Type",
-                                "text/plain"
-                        )
-                        .setBody(body);
+                        "Content-Type",
+                        "text/plain"
+                ).setBody(body);
             }
 
             mockWebServer.enqueue(response);
         }
     }
+
 }

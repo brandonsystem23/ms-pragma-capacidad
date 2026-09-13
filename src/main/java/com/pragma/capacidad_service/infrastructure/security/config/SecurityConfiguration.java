@@ -58,6 +58,7 @@ public class SecurityConfiguration {
                                 "/v3/api-docs/**"
                         ).permitAll()
                         .pathMatchers("/api/v1/capability/create").hasRole("ADMINISTRADOR")
+                        .pathMatchers("/api/v1/capability/list").hasRole("ADMINISTRADOR")
                         .anyExchange().authenticated()
                 )
                 .addFilterAt(authenticationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)

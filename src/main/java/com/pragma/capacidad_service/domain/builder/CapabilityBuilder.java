@@ -1,13 +1,12 @@
 package com.pragma.capacidad_service.domain.builder;
 
 import com.pragma.capacidad_service.domain.model.Capability;
-import com.pragma.capacidad_service.domain.model.CapabilityCommand;
 import com.pragma.capacidad_service.domain.model.Technology;
+import com.pragma.capacidad_service.domain.model.command.CapabilityCommand;
 
 public final class CapabilityBuilder {
 
     private CapabilityBuilder() {
-
     }
 
     public static Capability buildCapability(CapabilityCommand capabilityCommand) {
@@ -15,7 +14,8 @@ public final class CapabilityBuilder {
                 .name(capabilityCommand.name())
                 .description(capabilityCommand.description())
                 .technologies(capabilityCommand.technologyIds().stream()
-                        .map(CapabilityBuilder::buildTechnology).toList())
+                        .map(CapabilityBuilder::buildTechnology)
+                        .toList())
                 .build();
     }
 

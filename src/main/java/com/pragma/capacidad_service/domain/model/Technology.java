@@ -13,4 +13,7 @@ public class Technology {
 
     Long id;
 
+    String name;
+
 }
+

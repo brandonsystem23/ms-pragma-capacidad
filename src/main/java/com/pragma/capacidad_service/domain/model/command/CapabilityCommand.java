@@ -1,4 +1,4 @@
-package com.pragma.capacidad_service.domain.model;
+package com.pragma.capacidad_service.domain.model.command;
 
 import java.util.List;
 

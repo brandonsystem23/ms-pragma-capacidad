@@ -3,7 +3,8 @@ package com.pragma.capacidad_service.domain.validation;
 import com.pragma.capacidad_service.domain.exception.DomainErrorCode;
 import com.pragma.capacidad_service.domain.exception.DomainErrorMessages;
 import com.pragma.capacidad_service.domain.exception.DomainException;
-import com.pragma.capacidad_service.domain.model.CapabilityCommand;
+import com.pragma.capacidad_service.domain.model.command.CapabilityCommand;
+import com.pragma.capacidad_service.domain.model.command.CapabilityPageCommand;
 import com.pragma.capacidad_service.domain.validation.capability.DomainCapabilityValidator;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -262,4 +263,66 @@ class DomainCapabilityValidatorTest {
                 exception.getMessage()
         );
     }
+
+    @Test
+    void shouldPassWhenPaginationIsValid() {
+        CapabilityPageCommand command = new CapabilityPageCommand(0, 10, "name", "asc");
+
+        Assertions.assertDoesNotThrow(() ->
+                domainCapabilityValidator.validatePagination(command)
+        );
+    }
+
+    @Test
+    void shouldFailWhenPageIsNegative() {
+        CapabilityPageCommand command = new CapabilityPageCommand(-1, 10, "name", "asc");
+
+        DomainException exception = Assertions.assertThrows(
+                DomainException.class,
+                () -> domainCapabilityValidator.validatePagination(command)
+        );
+
+        Assertions.assertEquals(DomainErrorCode.INVALID_PAGE, exception.getCode());
+        Assertions.assertEquals(DomainErrorMessages.INVALID_PAGE, exception.getMessage());
+    }
+
+    @Test
+    void shouldFailWhenSizeIsInvalid() {
+        CapabilityPageCommand command = new CapabilityPageCommand(0, 0, "name", "asc");
+
+        DomainException exception = Assertions.assertThrows(
+                DomainException.class,
+                () -> domainCapabilityValidator.validatePagination(command)
+        );
+
+        Assertions.assertEquals(DomainErrorCode.INVALID_SIZE, exception.getCode());
+        Assertions.assertEquals(DomainErrorMessages.INVALID_SIZE, exception.getMessage());
+    }
+
+    @Test
+    void shouldFailWhenSortByIsInvalid() {
+        CapabilityPageCommand command = new CapabilityPageCommand(0, 10, "otro", "asc");
+
+        DomainException exception = Assertions.assertThrows(
+                DomainException.class,
+                () -> domainCapabilityValidator.validatePagination(command)
+        );
+
+        Assertions.assertEquals(DomainErrorCode.INVALID_SORT_BY, exception.getCode());
+        Assertions.assertEquals(DomainErrorMessages.INVALID_SORT_BY, exception.getMessage());
+    }
+
+    @Test
+    void shouldFailWhenDirectionIsInvalid() {
+        CapabilityPageCommand command = new CapabilityPageCommand(0, 10, "name", "otro");
+
+        DomainException exception = Assertions.assertThrows(
+                DomainException.class,
+                () -> domainCapabilityValidator.validatePagination(command)
+        );
+
+        Assertions.assertEquals(DomainErrorCode.INVALID_DIRECTION, exception.getCode());
+        Assertions.assertEquals(DomainErrorMessages.INVALID_DIRECTION, exception.getMessage());
+    }
+
 }

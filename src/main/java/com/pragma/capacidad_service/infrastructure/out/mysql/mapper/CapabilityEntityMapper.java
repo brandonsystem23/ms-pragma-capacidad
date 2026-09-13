@@ -16,6 +16,7 @@ public interface CapabilityEntityMapper {
     CapabilityEntity toEntity(Capability capability);
 
     @Mapping(target = "id", source = "capabilityTechnologyEntity.technologyId")
+    @Mapping(target = "name", ignore = true )
     Technology toTechnology(CapabilityTechnologyEntity capabilityTechnologyEntity);
 
 }

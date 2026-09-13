@@ -51,7 +51,7 @@ class CapabilityControllerTest {
                 .thenReturn(Mono.just(response));
 
         StepVerifier.create(
-                        capabilityController.createTechnology(
+                        capabilityController.createCapability(
                                 authorizationHeader,
                                 request
                         )
@@ -82,7 +82,7 @@ class CapabilityControllerTest {
                 );
 
         StepVerifier.create(
-                        capabilityController.createTechnology(
+                        capabilityController.createCapability(
                                 authorizationHeader,
                                 request
                         )
@@ -119,7 +119,7 @@ class CapabilityControllerTest {
                 .thenReturn(Mono.just(response));
 
         StepVerifier.create(
-                        capabilityController.createTechnology(
+                        capabilityController.createCapability(
                                 authorizationHeader,
                                 request
                         )

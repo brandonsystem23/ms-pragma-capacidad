@@ -26,12 +26,12 @@ public class CapabilityController {
 
     @PostMapping("/create")
     @Operation(summary = "Crear capacidad", description = "Crear una capacidad. Requiere rol ADMINISTRADOR")
-    public Mono<CapabilityResponse> createTechnology(
+    public Mono<CapabilityResponse> createCapability(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
             @RequestBody CapabilityRequest request
     ) {
 
-        log.info("Solicitud para crear una tecnologia");
+        log.info("Solicitud para crear una capacidad");
 
         String token = UtilTokenExtractor.extract(authorizationHeader);
 

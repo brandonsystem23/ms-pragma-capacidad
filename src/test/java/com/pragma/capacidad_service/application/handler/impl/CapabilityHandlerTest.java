@@ -5,6 +5,7 @@ import com.pragma.capacidad_service.application.dto.response.CapabilityListItemR
 import com.pragma.capacidad_service.application.dto.response.CapabilityResponse;
 import com.pragma.capacidad_service.application.dto.response.TechnologyBasicResponse;
 import com.pragma.capacidad_service.application.mapper.CapabilityDtoMapper;
+import com.pragma.capacidad_service.domain.api.ICapabilityExistsByIdsServicePort;
 import com.pragma.capacidad_service.domain.api.ICapabilityRegisterServicePort;
 import com.pragma.capacidad_service.domain.api.ICapabilityRetrieveServicePort;
 import com.pragma.capacidad_service.domain.model.Capability;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -32,6 +34,9 @@ class CapabilityHandlerTest {
 
     @Mock
     private ICapabilityRetrieveServicePort iCapabilityRetrieveServicePort;
+
+    @Mock
+    private ICapabilityExistsByIdsServicePort iCapabilityExistsByIdsServicePort;
 
     @Mock
     private CapabilityDtoMapper capabilityDtoMapper;
@@ -192,6 +197,36 @@ class CapabilityHandlerTest {
                 .expectErrorMatches(error ->
                         error instanceof RuntimeException &&
                                 error.getMessage().equals("error listando capacidades")
+                )
+                .verify();
+    }
+
+    @Test
+    void shouldReturnExistingTechnologyIds() {
+        List<Long> ids = List.of(1L, 2L, 3L);
+        List<Long> existingIds = List.of(1L, 3L);
+
+        when(iCapabilityExistsByIdsServicePort.retrieveExistingIds(ids))
+                .thenReturn(Flux.fromIterable(existingIds));
+
+        StepVerifier.create(capabilityHandler.existsByIds(ids))
+                .expectNext(existingIds)
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldPropagateErrorWhenExistsByIdsFails() {
+        List<Long> ids = List.of(1L, 2L, 3L);
+
+        when(iCapabilityExistsByIdsServicePort.retrieveExistingIds(ids))
+                .thenReturn(Flux.error(
+                        new RuntimeException("error buscando tecnologías existentes")
+                ));
+
+        StepVerifier.create(capabilityHandler.existsByIds(ids))
+                .expectErrorMatches(error ->
+                        error instanceof RuntimeException &&
+                                error.getMessage().equals("error buscando tecnologías existentes")
                 )
                 .verify();
     }

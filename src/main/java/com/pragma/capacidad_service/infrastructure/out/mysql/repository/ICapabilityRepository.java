@@ -6,6 +6,8 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 public interface ICapabilityRepository extends ReactiveCrudRepository<CapabilityEntity, Long> {
 
     Mono<Boolean> existsByName(String name);
@@ -52,4 +54,11 @@ public interface ICapabilityRepository extends ReactiveCrudRepository<Capability
 
     @Query("SELECT COUNT(*) FROM capability")
     Mono<Long> countAllCapabilities();
+
+    @Query("""
+        SELECT id
+        FROM capability
+        WHERE id IN (:ids)
+        """)
+    Flux<Long> findExistingIds(List<Long> ids);
 }

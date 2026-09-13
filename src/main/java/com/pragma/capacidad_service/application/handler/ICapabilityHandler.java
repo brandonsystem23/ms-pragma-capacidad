@@ -5,6 +5,8 @@ import com.pragma.capacidad_service.application.dto.response.CapabilityResponse;
 import com.pragma.capacidad_service.application.dto.response.PagedCapabilityResponse;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 public interface ICapabilityHandler {
 
     Mono<CapabilityResponse> create(CapabilityRequest request, String token);
@@ -16,4 +18,6 @@ public interface ICapabilityHandler {
             String direction,
             String token
     );
+
+    Mono<List<Long>> existsByIds(List<Long> ids);
 }

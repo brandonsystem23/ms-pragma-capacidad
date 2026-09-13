@@ -1,10 +1,12 @@
 package com.pragma.capacidad_service.infrastructure.configuration;
 
+import com.pragma.capacidad_service.domain.api.ICapabilityExistsByIdsServicePort;
 import com.pragma.capacidad_service.domain.api.ICapabilityRegisterServicePort;
 import com.pragma.capacidad_service.domain.api.ICapabilityRetrieveServicePort;
 import com.pragma.capacidad_service.domain.service.TechnologyDetailService;
 import com.pragma.capacidad_service.domain.spi.ICapabilityPersistencePort;
 import com.pragma.capacidad_service.domain.spi.ITechnologyWebClientPort;
+import com.pragma.capacidad_service.domain.usecase.CapabilityExistsByIdsUseCase;
 import com.pragma.capacidad_service.domain.usecase.CapabilityRegisterUseCase;
 import com.pragma.capacidad_service.domain.usecase.CapabilityRetrieveUseCase;
 import com.pragma.capacidad_service.domain.validation.capability.DomainCapabilityValidator;
@@ -52,6 +54,15 @@ public class BeanConfiguration {
                 iCapabilityPersistencePort,
                 domainCapabilityValidator,
                 technologyDetailService
+        );
+    }
+
+    @Bean
+    public ICapabilityExistsByIdsServicePort capabilityExistsByIdsUseCase(
+            ICapabilityPersistencePort iCapabilityPersistencePort
+    ) {
+        return new CapabilityExistsByIdsUseCase(
+                iCapabilityPersistencePort
         );
     }
 

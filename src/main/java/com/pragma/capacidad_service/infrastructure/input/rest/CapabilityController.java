@@ -13,6 +13,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/capability")
 @RequiredArgsConstructor
@@ -50,6 +52,16 @@ public class CapabilityController {
         String token = UtilTokenExtractor.extract(authorizationHeader);
 
         return iCapabilityHandler.getCapabilities(page, size, sortBy, direction, token);
+    }
+
+    @PostMapping("/exists-by-ids")
+    @Operation(summary = "Consultar capacidades existentes por ids",
+            description = "Retorna los ids de las capacidades que existen. Requiere rol ADMINISTRADOR")
+    public Mono<List<Long>> existsByIds(@RequestBody List<Long> ids) {
+
+        log.info("Petición para validar tecnologías por ids");
+
+        return iCapabilityHandler.existsByIds(ids);
     }
 
 

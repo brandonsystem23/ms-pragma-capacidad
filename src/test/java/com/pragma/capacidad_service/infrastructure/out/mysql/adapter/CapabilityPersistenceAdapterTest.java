@@ -737,6 +737,20 @@ class CapabilityPersistenceAdapterTest {
                 .countAllCapabilities();
     }
 
+    @Test
+    void shouldFindExistingTechnologyIdsSuccessfully() {
+        List<Long> ids = List.of(1L, 2L, 3L);
+        List<Long> existingIds = List.of(1L, 3L);
+
+        when(iCapabilityRepository.findExistingIds(ids))
+                .thenReturn(Flux.fromIterable(existingIds));
+
+        StepVerifier.create(capabilityPersistenceAdapter.findExistingIds(ids))
+                .expectNext(1L)
+                .expectNext(3L)
+                .verifyComplete();
+    }
+
 
 
 }

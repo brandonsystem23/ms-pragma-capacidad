@@ -14,6 +14,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.List;
+
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -195,6 +197,36 @@ class CapabilityControllerTest {
                 .verify();
 
         verify(iCapabilityHandler).getCapabilities(0, 10, "name", "asc", token);
+    }
+
+
+    @Test
+    void shouldReturnExistingTechnologyIdsSuccessfully() {
+        List<Long> ids = List.of(1L, 2L, 3L);
+        List<Long> response  = List.of(1L,3L);
+
+        when(iCapabilityHandler.existsByIds(ids))
+                .thenReturn(Mono.just(response));
+
+        StepVerifier.create(capabilityController.existsByIds(ids))
+                .expectNext(response)
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldPropagateErrorWhenExistsByIdsFails() {
+        List<Long> ids = List.of(1L, 2L, 3L);
+
+        when(iCapabilityHandler.existsByIds(ids))
+                .thenReturn(Mono.error(
+                        new RuntimeException("error validando tecnologías por ids")
+                ));
+
+        StepVerifier.create(capabilityController.existsByIds(ids))
+                .expectErrorMatches(error ->
+                        error instanceof RuntimeException &&
+                                error.getMessage().equals("error validando tecnologías por ids"))
+                .verify();
     }
 
 }

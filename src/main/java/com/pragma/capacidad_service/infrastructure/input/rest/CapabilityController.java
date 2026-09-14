@@ -1,6 +1,7 @@
 package com.pragma.capacidad_service.infrastructure.input.rest;
 
 import com.pragma.capacidad_service.application.dto.request.CapabilityRequest;
+import com.pragma.capacidad_service.application.dto.response.CapabilityListItemResponse;
 import com.pragma.capacidad_service.application.dto.response.CapabilityResponse;
 import com.pragma.capacidad_service.application.dto.response.PagedCapabilityResponse;
 import com.pragma.capacidad_service.application.handler.ICapabilityHandler;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -62,6 +64,20 @@ public class CapabilityController {
         log.info("Petición para validar tecnologías por ids");
 
         return iCapabilityHandler.existsByIds(ids);
+    }
+
+    @GetMapping("/by-ids")
+    @Operation(summary = "Obtener tecnologias por ids",
+            description = "Retorna las tecnologías encontradas según la lista de ids. Requiere rol ADMINISTRADOR")
+    public Flux<CapabilityListItemResponse> findByIds(
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
+            @RequestParam List<Long> ids) {
+
+        log.info("Petición para obtener capacidades por ids");
+
+        String token = UtilTokenExtractor.extract(authorizationHeader);
+
+        return iCapabilityHandler.findByIds(ids, token);
     }
 
 

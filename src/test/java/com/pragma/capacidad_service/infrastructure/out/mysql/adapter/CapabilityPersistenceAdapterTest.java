@@ -751,6 +751,139 @@ class CapabilityPersistenceAdapterTest {
                 .verifyComplete();
     }
 
+    @Test
+    void shouldFindCapabilitiesByIdsSuccessfully() {
 
+        List<Long> ids = List.of(1L, 2L);
+
+        CapabilityEntity capabilityEntity1 = CapabilityEntity.builder()
+                .id(1L)
+                .name("Backend")
+                .description("Capacidad backend")
+                .build();
+
+        CapabilityEntity capabilityEntity2 = CapabilityEntity.builder()
+                .id(2L)
+                .name("Frontend")
+                .description("Capacidad frontend")
+                .build();
+
+        Capability capability1 = Capability.builder()
+                .id(1L)
+                .name("Backend")
+                .description("Capacidad backend")
+                .build();
+
+        Capability capability2 = Capability.builder()
+                .id(2L)
+                .name("Frontend")
+                .description("Capacidad frontend")
+                .build();
+
+        CapabilityTechnologyEntity relation1 = CapabilityTechnologyEntity.builder()
+                .capabilityId(1L)
+                .technologyId(10L)
+                .build();
+
+        CapabilityTechnologyEntity relation2 = CapabilityTechnologyEntity.builder()
+                .capabilityId(1L)
+                .technologyId(20L)
+                .build();
+
+        CapabilityTechnologyEntity relation3 = CapabilityTechnologyEntity.builder()
+                .capabilityId(2L)
+                .technologyId(30L)
+                .build();
+
+        when(iCapabilityRepository.findByIdIn(ids))
+                .thenReturn(Flux.just(capabilityEntity1, capabilityEntity2));
+
+        when(iCapabilityTechnologyRepository.findAllByCapabilityId(1L))
+                .thenReturn(Flux.just(relation1, relation2));
+
+        when(iCapabilityTechnologyRepository.findAllByCapabilityId(2L))
+                .thenReturn(Flux.just(relation3));
+
+        when(capabilityEntityMapper.toDomain(capabilityEntity1))
+                .thenReturn(capability1);
+
+        when(capabilityEntityMapper.toDomain(capabilityEntity2))
+                .thenReturn(capability2);
+
+        StepVerifier.create(
+                        capabilityPersistenceAdapter.findByIds(ids)
+                )
+                .assertNext(result -> {
+                    org.junit.jupiter.api.Assertions.assertEquals(
+                            1L,
+                            result.getId()
+                    );
+
+                    org.junit.jupiter.api.Assertions.assertEquals(
+                            "Backend",
+                            result.getName()
+                    );
+
+                    org.junit.jupiter.api.Assertions.assertEquals(
+                            2,
+                            result.getTechnologies().size()
+                    );
+
+                    org.junit.jupiter.api.Assertions.assertEquals(
+                            10L,
+                            result.getTechnologies().get(0).getId()
+                    );
+
+                    org.junit.jupiter.api.Assertions.assertEquals(
+                            20L,
+                            result.getTechnologies().get(1).getId()
+                    );
+                })
+                .assertNext(result -> {
+                    org.junit.jupiter.api.Assertions.assertEquals(
+                            2L,
+                            result.getId()
+                    );
+
+                    org.junit.jupiter.api.Assertions.assertEquals(
+                            "Frontend",
+                            result.getName()
+                    );
+
+                    org.junit.jupiter.api.Assertions.assertEquals(
+                            1,
+                            result.getTechnologies().size()
+                    );
+
+                    org.junit.jupiter.api.Assertions.assertEquals(
+                            30L,
+                            result.getTechnologies().getFirst().getId()
+                    );
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldPropagateErrorWhenFindByIdsFails() {
+
+        List<Long> ids = List.of(1L, 2L);
+
+        RuntimeException exception =
+                new RuntimeException("Error consultando capacidades por ids");
+
+        when(iCapabilityRepository.findByIdIn(ids))
+                .thenReturn(Flux.error(exception));
+
+        StepVerifier.create(
+                        capabilityPersistenceAdapter.findByIds(ids)
+                )
+                .expectErrorMatches(error ->
+                        error instanceof RuntimeException &&
+                                error.getMessage().equals(
+                                        "Error consultando capacidades por ids"
+                                )
+                )
+                .verify();
+    }
 
 }

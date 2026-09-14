@@ -229,4 +229,79 @@ class CapabilityControllerTest {
                 .verify();
     }
 
+    @Test
+    void shouldFindCapabilitiesByIdsSuccessfully() {
+        String authorizationHeader = "Bearer token";
+        String token = "token";
+        List<Long> ids = List.of(1L, 2L);
+
+        CapabilityListItemResponse response1 = CapabilityListItemResponse.builder()
+                .id(1L)
+                .name("Backend")
+                .description("Capacidad backend")
+                .technologies(List.of(
+                        TechnologyBasicResponse.builder()
+                                .id(1L)
+                                .name("Java")
+                                .build(),
+                        TechnologyBasicResponse.builder()
+                                .id(2L)
+                                .name("Spring")
+                                .build()
+                ))
+                .build();
+
+        CapabilityListItemResponse response2 = CapabilityListItemResponse.builder()
+                .id(2L)
+                .name("Frontend")
+                .description("Capacidad frontend")
+                .technologies(List.of(
+                        TechnologyBasicResponse.builder()
+                                .id(3L)
+                                .name("Angular")
+                                .build()
+                ))
+                .build();
+
+        when(iCapabilityHandler.findByIds(ids, token))
+                .thenReturn(reactor.core.publisher.Flux.just(response1, response2));
+
+        StepVerifier.create(
+                        capabilityController.findByIds(
+                                authorizationHeader,
+                                ids
+                        )
+                )
+                .expectNext(response1)
+                .expectNext(response2)
+                .verifyComplete();
+
+    }
+
+    @Test
+    void shouldPropagateErrorWhenFindByIdsFails() {
+        String authorizationHeader = "Bearer token";
+        String token = "token";
+        List<Long> ids = List.of(1L, 2L);
+
+        when(iCapabilityHandler.findByIds(ids, token))
+                .thenReturn(
+                        reactor.core.publisher.Flux.error(
+                                new RuntimeException("error buscando capacidades por ids")
+                        )
+                );
+
+        StepVerifier.create(
+                        capabilityController.findByIds(
+                                authorizationHeader,
+                                ids
+                        )
+                )
+                .expectErrorMatches(error ->
+                        error instanceof RuntimeException &&
+                                error.getMessage().equals("error buscando capacidades por ids")
+                )
+                .verify();
+    }
+
 }

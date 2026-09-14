@@ -18,4 +18,6 @@ public interface ICapabilityPersistencePort {
 
     Flux<Long> findExistingIds(List<Long> ids);
 
+    Flux<Capability> findByIds(List<Long> ids);
+
 }

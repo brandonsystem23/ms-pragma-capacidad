@@ -61,4 +61,6 @@ public interface ICapabilityRepository extends ReactiveCrudRepository<Capability
         WHERE id IN (:ids)
         """)
     Flux<Long> findExistingIds(List<Long> ids);
+
+    Flux<CapabilityEntity> findByIdIn(List<Long> ids);
 }

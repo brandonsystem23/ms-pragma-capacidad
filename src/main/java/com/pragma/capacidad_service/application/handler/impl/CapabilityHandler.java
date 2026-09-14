@@ -1,6 +1,7 @@
 package com.pragma.capacidad_service.application.handler.impl;
 
 import com.pragma.capacidad_service.application.dto.request.CapabilityRequest;
+import com.pragma.capacidad_service.application.dto.response.CapabilityListItemResponse;
 import com.pragma.capacidad_service.application.dto.response.CapabilityResponse;
 import com.pragma.capacidad_service.application.dto.response.PagedCapabilityResponse;
 import com.pragma.capacidad_service.application.handler.ICapabilityHandler;
@@ -11,6 +12,7 @@ import com.pragma.capacidad_service.domain.api.ICapabilityRetrieveServicePort;
 import com.pragma.capacidad_service.domain.model.command.CapabilityPageCommand;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -60,5 +62,11 @@ public class CapabilityHandler implements ICapabilityHandler {
     public Mono<List<Long>> existsByIds(List<Long> ids) {
         return iCapabilityExistsByIdsServicePort.retrieveExistingIds(ids)
                 .collectList();
+    }
+
+    @Override
+    public Flux<CapabilityListItemResponse> findByIds(List<Long> ids, String token) {
+        return iCapabilityRetrieveServicePort.retrieveByIds(ids, token)
+                .map(capabilityDtoMapper::toListItemResponse);
     }
 }

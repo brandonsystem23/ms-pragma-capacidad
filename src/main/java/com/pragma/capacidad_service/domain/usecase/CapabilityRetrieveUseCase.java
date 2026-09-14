@@ -12,10 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @Slf4j
-public class CapabilityRetrieveUseCase
-        implements ICapabilityRetrieveServicePort {
+public class CapabilityRetrieveUseCase implements ICapabilityRetrieveServicePort {
 
     private final ICapabilityPersistencePort iCapabilityPersistencePort;
     private final DomainCapabilityValidator domainCapabilityValidator;
@@ -53,6 +54,12 @@ public class CapabilityRetrieveUseCase
                                         .build()
                         )
         );
+    }
+
+    @Override
+    public Flux<Capability> retrieveByIds(List<Long> ids, String token) {
+        return iCapabilityPersistencePort.findByIds(ids)
+                .concatMap(capability -> enrichCapability(capability, token));
     }
 
     private Mono<Capability> enrichCapability(Capability capability, String token) {

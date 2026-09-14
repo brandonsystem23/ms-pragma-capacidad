@@ -231,4 +231,70 @@ class CapabilityHandlerTest {
                 .verify();
     }
 
+    @Test
+    void shouldFindCapabilitiesByIdsAndMapResponse() {
+        List<Long> ids = List.of(1L, 2L);
+        String token = "Bearer token";
+
+        Capability capability1 = Capability.builder()
+                .id(1L)
+                .name("Backend")
+                .description("Capacidad backend")
+                .technologies(List.of())
+                .build();
+
+        Capability capability2 = Capability.builder()
+                .id(2L)
+                .name("Frontend")
+                .description("Capacidad frontend")
+                .technologies(List.of())
+                .build();
+
+        CapabilityListItemResponse response1 = CapabilityListItemResponse.builder()
+                .id(1L)
+                .name("Backend")
+                .description("Capacidad backend")
+                .technologies(List.of())
+                .build();
+
+        CapabilityListItemResponse response2 = CapabilityListItemResponse.builder()
+                .id(2L)
+                .name("Frontend")
+                .description("Capacidad frontend")
+                .technologies(List.of())
+                .build();
+
+        when(iCapabilityRetrieveServicePort.retrieveByIds(ids, token))
+                .thenReturn(Flux.just(capability1, capability2));
+
+        when(capabilityDtoMapper.toListItemResponse(capability1))
+                .thenReturn(response1);
+
+        when(capabilityDtoMapper.toListItemResponse(capability2))
+                .thenReturn(response2);
+
+        StepVerifier.create(capabilityHandler.findByIds(ids, token))
+                .expectNext(response1)
+                .expectNext(response2)
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldPropagateErrorWhenFindByIdsFails() {
+        List<Long> ids = List.of(1L, 2L);
+        String token = "Bearer token";
+
+        when(iCapabilityRetrieveServicePort.retrieveByIds(ids, token))
+                .thenReturn(Flux.error(
+                        new RuntimeException("error buscando capacidades")
+                ));
+
+        StepVerifier.create(capabilityHandler.findByIds(ids, token))
+                .expectErrorMatches(error ->
+                        error instanceof RuntimeException &&
+                                error.getMessage().equals("error buscando capacidades")
+                )
+                .verify();
+    }
+
 }

@@ -101,6 +101,27 @@ public class CapabilityPersistenceAdapter implements ICapabilityPersistencePort 
         return iCapabilityRepository.findExistingIds(ids);
     }
 
+    @Override
+    public Flux<Capability> findByIds(List<Long> ids) {
+        return iCapabilityRepository.findByIdIn(ids)
+                .concatMap(capabilityEntity ->
+                    findTechnologyIdsByCapabilityId(capabilityEntity.getId())
+                            .map(technologyIds -> {
+                                Capability capability = capabilityEntityMapper.toDomain(capabilityEntity);
+
+                                List<Technology> technologies = technologyIds.stream()
+                                        .map(technologyId -> Technology.builder()
+                                                .id(technologyId)
+                                                .build())
+                                        .toList();
+
+                                capability.setTechnologies(technologies);
+
+                                return capability;
+                            })
+                );
+    }
+
     private Mono<List<Long>> findTechnologyIdsByCapabilityId(Long capabilityId) {
         return iCapabilityTechnologyRepository.findAllByCapabilityId(capabilityId)
                 .map(CapabilityTechnologyEntity::getTechnologyId)

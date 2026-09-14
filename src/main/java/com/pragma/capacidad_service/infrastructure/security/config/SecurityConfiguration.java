@@ -62,6 +62,7 @@ public class SecurityConfiguration {
                         .pathMatchers("/api/v1/capability/create").hasRole(ADMIN)
                         .pathMatchers("/api/v1/capability/list").hasRole(ADMIN)
                         .pathMatchers("/api/v1/capability/exists-by-ids").hasRole(ADMIN)
+                        .pathMatchers("/api/v1/capability/by-ids").hasRole(ADMIN)
                         .anyExchange().authenticated()
                 )
                 .addFilterAt(authenticationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)

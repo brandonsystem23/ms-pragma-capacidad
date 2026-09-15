@@ -11,19 +11,27 @@ import java.util.List;
 
 public interface ICapabilityTechnologyRepository extends ReactiveCrudRepository<CapabilityTechnologyEntity, Long> {
 
+    @Query("""
+        SELECT id, capability_id, technology_id, status
+        FROM capability_technology
+        WHERE capability_id = :capabilityId
+          AND status = true
+        """)
     Flux<CapabilityTechnologyEntity> findAllByCapabilityId(Long capabilityId);
 
     @Query("""
-        SELECT technology_id
+        SELECT DISTINCT technology_id
         FROM capability_technology
         WHERE capability_id IN (:capabilityIds)
+          AND status = true
         """)
     Flux<Long> findTechnologyIdsByCapabilityIds(List<Long> capabilityIds);
 
     @Modifying
     @Query("""
-        DELETE FROM capability_technology
+        UPDATE capability_technology
+        SET status = :status
         WHERE capability_id IN (:capabilityIds)
         """)
-    Mono<Integer> deleteByCapabilityIds(List<Long> capabilityIds);
+    Mono<Integer> updateStatusByCapabilityIds(List<Long> capabilityIds, Boolean status);
 }

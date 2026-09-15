@@ -51,24 +51,28 @@ class CapabilityPersistenceAdapterTest {
         Capability capability = Capability.builder()
                 .name("Desarrollo Backend")
                 .description("Capacidad para desarrollar servicios backend")
+                .status(true)
                 .technologies(List.of(technology1, technology2))
                 .build();
 
         CapabilityEntity entity = CapabilityEntity.builder()
                 .name("Desarrollo Backend")
                 .description("Capacidad para desarrollar servicios backend")
+                .status(true)
                 .build();
 
         CapabilityEntity savedEntity = CapabilityEntity.builder()
                 .id(1L)
                 .name("Desarrollo Backend")
                 .description("Capacidad para desarrollar servicios backend")
+                .status(true)
                 .build();
 
         Capability savedCapability = Capability.builder()
                 .id(1L)
                 .name("Desarrollo Backend")
                 .description("Capacidad para desarrollar servicios backend")
+                .status(true)
                 .technologies(List.of(technology1, technology2))
                 .build();
 
@@ -76,12 +80,14 @@ class CapabilityPersistenceAdapterTest {
                 CapabilityTechnologyEntity.builder()
                         .capabilityId(1L)
                         .technologyId(1L)
+                        .status(true)
                         .build();
 
         CapabilityTechnologyEntity technologyEntity2 =
                 CapabilityTechnologyEntity.builder()
                         .capabilityId(1L)
                         .technologyId(2L)
+                        .status(true)
                         .build();
 
         when(capabilityEntityMapper.toEntity(capability))
@@ -125,6 +131,11 @@ class CapabilityPersistenceAdapterTest {
                     );
 
                     org.junit.jupiter.api.Assertions.assertEquals(
+                            true,
+                            result.getStatus()
+                    );
+
+                    org.junit.jupiter.api.Assertions.assertEquals(
                             List.of(technology1, technology2),
                             result.getTechnologies()
                     );
@@ -140,7 +151,7 @@ class CapabilityPersistenceAdapterTest {
 
         String name = "Desarrollo Backend";
 
-        when(iCapabilityRepository.existsByName(name))
+        when(iCapabilityRepository.existsByNameAndStatusTrue(name))
                 .thenReturn(Mono.just(true));
 
         StepVerifier.create(
@@ -149,7 +160,6 @@ class CapabilityPersistenceAdapterTest {
                 .expectNext(true)
                 .verifyComplete();
 
-        verify(iCapabilityRepository).existsByName(name);
     }
 
     @Test
@@ -157,7 +167,7 @@ class CapabilityPersistenceAdapterTest {
 
         String name = "Desarrollo Backend";
 
-        when(iCapabilityRepository.existsByName(name))
+        when(iCapabilityRepository.existsByNameAndStatusTrue(name))
                 .thenReturn(Mono.just(false));
 
         StepVerifier.create(
@@ -166,7 +176,6 @@ class CapabilityPersistenceAdapterTest {
                 .expectNext(false)
                 .verifyComplete();
 
-        verify(iCapabilityRepository).existsByName(name);
     }
 
     @Test
@@ -179,12 +188,14 @@ class CapabilityPersistenceAdapterTest {
         Capability capability = Capability.builder()
                 .name("Desarrollo Backend")
                 .description("Capacidad para desarrollar servicios backend")
+                .status(true)
                 .technologies(List.of(technology))
                 .build();
 
         CapabilityEntity entity = CapabilityEntity.builder()
                 .name("Desarrollo Backend")
                 .description("Capacidad para desarrollar servicios backend")
+                .status(true)
                 .build();
 
         RuntimeException exception =
@@ -217,18 +228,21 @@ class CapabilityPersistenceAdapterTest {
         Capability capability = Capability.builder()
                 .name("Desarrollo Backend")
                 .description("Capacidad para desarrollar servicios backend")
+                .status(true)
                 .technologies(List.of(technology))
                 .build();
 
         CapabilityEntity entity = CapabilityEntity.builder()
                 .name("Desarrollo Backend")
                 .description("Capacidad para desarrollar servicios backend")
+                .status(true)
                 .build();
 
         CapabilityEntity savedEntity = CapabilityEntity.builder()
                 .id(1L)
                 .name("Desarrollo Backend")
                 .description("Capacidad para desarrollar servicios backend")
+                .status(true)
                 .build();
 
         RuntimeException exception =
@@ -262,7 +276,7 @@ class CapabilityPersistenceAdapterTest {
         RuntimeException exception =
                 new RuntimeException("Error consultando capacidad");
 
-        when(iCapabilityRepository.existsByName(name))
+        when(iCapabilityRepository.existsByNameAndStatusTrue(name))
                 .thenReturn(Mono.error(exception));
 
         StepVerifier.create(
@@ -282,22 +296,26 @@ class CapabilityPersistenceAdapterTest {
                 .id(1L)
                 .name("Backend")
                 .description("Capacidad backend")
+                .status(true)
                 .build();
 
         Capability capability = Capability.builder()
                 .id(1L)
                 .name("Backend")
                 .description("Capacidad backend")
+                .status(true)
                 .build();
 
         CapabilityTechnologyEntity relation1 = CapabilityTechnologyEntity.builder()
                 .capabilityId(1L)
                 .technologyId(1L)
+                .status(true)
                 .build();
 
         CapabilityTechnologyEntity relation2 = CapabilityTechnologyEntity.builder()
                 .capabilityId(1L)
                 .technologyId(2L)
+                .status(true)
                 .build();
 
         when(iCapabilityRepository.findAllOrderByNameAsc(10, 0))
@@ -317,6 +335,7 @@ class CapabilityPersistenceAdapterTest {
                     org.junit.jupiter.api.Assertions.assertEquals(1, result.content().size());
                     org.junit.jupiter.api.Assertions.assertEquals("Backend", result.content().getFirst().getName());
                     org.junit.jupiter.api.Assertions.assertEquals(2, result.content().getFirst().getTechnologies().size());
+                    org.junit.jupiter.api.Assertions.assertEquals(true, result.content().getFirst().getStatus());
                     org.junit.jupiter.api.Assertions.assertEquals(0, result.page());
                     org.junit.jupiter.api.Assertions.assertEquals(10, result.size());
                     org.junit.jupiter.api.Assertions.assertEquals(1L, result.totalElements());
@@ -333,17 +352,20 @@ class CapabilityPersistenceAdapterTest {
                 .id(1L)
                 .name("Backend")
                 .description("Capacidad backend")
+                .status(true)
                 .build();
 
         Capability capability = Capability.builder()
                 .id(1L)
                 .name("Backend")
                 .description("Capacidad backend")
+                .status(true)
                 .build();
 
         CapabilityTechnologyEntity relation = CapabilityTechnologyEntity.builder()
                 .capabilityId(1L)
                 .technologyId(1L)
+                .status(true)
                 .build();
 
         when(iCapabilityRepository.findAllOrderByTechnologyCountDesc(5, 5))
@@ -400,17 +422,20 @@ class CapabilityPersistenceAdapterTest {
                 .id(1L)
                 .name("Backend")
                 .description("Capacidad backend")
+                .status(true)
                 .build();
 
         Capability capability = Capability.builder()
                 .id(1L)
                 .name("Backend")
                 .description("Capacidad backend")
+                .status(true)
                 .build();
 
         CapabilityTechnologyEntity relation = CapabilityTechnologyEntity.builder()
                 .capabilityId(1L)
                 .technologyId(1L)
+                .status(true)
                 .build();
 
         when(iCapabilityRepository.findAllOrderByNameDesc(10, 0))
@@ -441,6 +466,10 @@ class CapabilityPersistenceAdapterTest {
                     org.junit.jupiter.api.Assertions.assertEquals(
                             "Backend",
                             result.content().getFirst().getName()
+                    );
+                    org.junit.jupiter.api.Assertions.assertEquals(
+                            true,
+                            result.content().getFirst().getStatus()
                     );
                     org.junit.jupiter.api.Assertions.assertEquals(
                             0,
@@ -482,17 +511,20 @@ class CapabilityPersistenceAdapterTest {
                 .id(1L)
                 .name("Backend")
                 .description("Capacidad backend")
+                .status(true)
                 .build();
 
         Capability capability = Capability.builder()
                 .id(1L)
                 .name("Backend")
                 .description("Capacidad backend")
+                .status(true)
                 .build();
 
         CapabilityTechnologyEntity relation = CapabilityTechnologyEntity.builder()
                 .capabilityId(1L)
                 .technologyId(1L)
+                .status(true)
                 .build();
 
         when(iCapabilityRepository.findAllOrderByTechnologyCountAsc(5, 5))
@@ -564,17 +596,20 @@ class CapabilityPersistenceAdapterTest {
                 .id(1L)
                 .name("Backend")
                 .description("Capacidad backend")
+                .status(true)
                 .build();
 
         Capability capability = Capability.builder()
                 .id(1L)
                 .name("Backend")
                 .description("Capacidad backend")
+                .status(true)
                 .build();
 
         CapabilityTechnologyEntity relation = CapabilityTechnologyEntity.builder()
                 .capabilityId(1L)
                 .technologyId(1L)
+                .status(true)
                 .build();
 
         when(iCapabilityRepository.findAllOrderByNameAsc(10, 0))
@@ -606,6 +641,11 @@ class CapabilityPersistenceAdapterTest {
                     org.junit.jupiter.api.Assertions.assertEquals(
                             "Backend",
                             result.content().getFirst().getName()
+                    );
+
+                    org.junit.jupiter.api.Assertions.assertEquals(
+                            true,
+                            result.content().getFirst().getStatus()
                     );
 
                     org.junit.jupiter.api.Assertions.assertEquals(
@@ -657,17 +697,20 @@ class CapabilityPersistenceAdapterTest {
                 .id(1L)
                 .name("Backend")
                 .description("Capacidad backend")
+                .status(true)
                 .build();
 
         Capability capability = Capability.builder()
                 .id(1L)
                 .name("Backend")
                 .description("Capacidad backend")
+                .status(true)
                 .build();
 
         CapabilityTechnologyEntity relation = CapabilityTechnologyEntity.builder()
                 .capabilityId(1L)
                 .technologyId(1L)
+                .status(true)
                 .build();
 
         when(iCapabilityRepository.findAllOrderByNameAsc(5, 0))
@@ -679,8 +722,6 @@ class CapabilityPersistenceAdapterTest {
         when(capabilityEntityMapper.toDomain(capabilityEntity))
                 .thenReturn(capability);
 
-        // 11 elementos con páginas de 5:
-        // totalPages = 3
         when(iCapabilityRepository.countAllCapabilities())
                 .thenReturn(Mono.just(11L));
 
@@ -718,11 +759,9 @@ class CapabilityPersistenceAdapterTest {
                             result.totalPages()
                     );
 
-
                     org.junit.jupiter.api.Assertions.assertTrue(
                             result.first()
                     );
-
 
                     org.junit.jupiter.api.Assertions.assertFalse(
                             result.last()
@@ -760,39 +799,46 @@ class CapabilityPersistenceAdapterTest {
                 .id(1L)
                 .name("Backend")
                 .description("Capacidad backend")
+                .status(true)
                 .build();
 
         CapabilityEntity capabilityEntity2 = CapabilityEntity.builder()
                 .id(2L)
                 .name("Frontend")
                 .description("Capacidad frontend")
+                .status(true)
                 .build();
 
         Capability capability1 = Capability.builder()
                 .id(1L)
                 .name("Backend")
                 .description("Capacidad backend")
+                .status(true)
                 .build();
 
         Capability capability2 = Capability.builder()
                 .id(2L)
                 .name("Frontend")
                 .description("Capacidad frontend")
+                .status(true)
                 .build();
 
         CapabilityTechnologyEntity relation1 = CapabilityTechnologyEntity.builder()
                 .capabilityId(1L)
                 .technologyId(10L)
+                .status(true)
                 .build();
 
         CapabilityTechnologyEntity relation2 = CapabilityTechnologyEntity.builder()
                 .capabilityId(1L)
                 .technologyId(20L)
+                .status(true)
                 .build();
 
         CapabilityTechnologyEntity relation3 = CapabilityTechnologyEntity.builder()
                 .capabilityId(2L)
                 .technologyId(30L)
+                .status(true)
                 .build();
 
         when(iCapabilityRepository.findByIdIn(ids))
@@ -825,6 +871,11 @@ class CapabilityPersistenceAdapterTest {
                     );
 
                     org.junit.jupiter.api.Assertions.assertEquals(
+                            true,
+                            result.getStatus()
+                    );
+
+                    org.junit.jupiter.api.Assertions.assertEquals(
                             2,
                             result.getTechnologies().size()
                     );
@@ -848,6 +899,11 @@ class CapabilityPersistenceAdapterTest {
                     org.junit.jupiter.api.Assertions.assertEquals(
                             "Frontend",
                             result.getName()
+                    );
+
+                    org.junit.jupiter.api.Assertions.assertEquals(
+                            true,
+                            result.getStatus()
                     );
 
                     org.junit.jupiter.api.Assertions.assertEquals(
@@ -887,54 +943,89 @@ class CapabilityPersistenceAdapterTest {
     }
 
     @Test
-    void shouldDeleteCapabilityTechnologiesByCapabilityIdsSuccessfully() {
+    void shouldFindTechnologyIdsByCapabilityIdsSuccessfully() {
         List<Long> ids = List.of(1L, 2L);
 
-        when(iCapabilityTechnologyRepository.deleteByCapabilityIds(ids))
-                .thenReturn(Mono.just(2));
+        when(iCapabilityTechnologyRepository.findTechnologyIdsByCapabilityIds(ids))
+                .thenReturn(Flux.just(10L, 20L, 30L));
 
-        StepVerifier.create(capabilityPersistenceAdapter.deleteCapabilityTechnologiesByCapabilityIds(ids))
+        StepVerifier.create(capabilityPersistenceAdapter.findTechnologyIdsByCapabilityIds(ids))
+                .expectNext(10L)
+                .expectNext(20L)
+                .expectNext(30L)
                 .verifyComplete();
     }
 
     @Test
-    void shouldDeleteCapabilitiesByIdsSuccessfully() {
+    void shouldUpdateCapabilityTechnologiesStatusByCapabilityIdsSuccessfully() {
         List<Long> ids = List.of(1L, 2L);
 
-        when(iCapabilityRepository.deleteByIds(ids))
+        when(iCapabilityTechnologyRepository.updateStatusByCapabilityIds(ids, false))
                 .thenReturn(Mono.just(2));
 
-        StepVerifier.create(capabilityPersistenceAdapter.deleteCapabilitiesByIds(ids))
+        StepVerifier.create(
+                        capabilityPersistenceAdapter.updateCapabilityTechnologiesStatusByCapabilityIds(ids, false)
+                )
                 .verifyComplete();
     }
 
     @Test
-    void shouldPropagateErrorWhenDeletingCapabilityTechnologiesFails() {
+    void shouldUpdateCapabilitiesStatusByIdsSuccessfully() {
         List<Long> ids = List.of(1L, 2L);
 
-        when(iCapabilityTechnologyRepository.deleteByCapabilityIds(ids))
-                .thenReturn(Mono.error(new RuntimeException("error eliminando relaciones")));
+        when(iCapabilityRepository.updateStatusByIds(ids, false))
+                .thenReturn(Mono.just(2));
 
-        StepVerifier.create(capabilityPersistenceAdapter.deleteCapabilityTechnologiesByCapabilityIds(ids))
+        StepVerifier.create(
+                        capabilityPersistenceAdapter.updateCapabilitiesStatusByIds(ids, false)
+                )
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldPropagateErrorWhenFindingTechnologyIdsByCapabilityIdsFails() {
+        List<Long> ids = List.of(1L, 2L);
+
+        when(iCapabilityTechnologyRepository.findTechnologyIdsByCapabilityIds(ids))
+                .thenReturn(Flux.error(new RuntimeException("error consultando ids de tecnologías")));
+
+        StepVerifier.create(capabilityPersistenceAdapter.findTechnologyIdsByCapabilityIds(ids))
                 .expectErrorMatches(error ->
                         error instanceof RuntimeException &&
-                                error.getMessage().equals("error eliminando relaciones"))
+                                error.getMessage().equals("error consultando ids de tecnologías"))
                 .verify();
     }
 
     @Test
-    void shouldPropagateErrorWhenDeletingCapabilitiesFails() {
+    void shouldPropagateErrorWhenUpdatingCapabilityTechnologiesStatusFails() {
         List<Long> ids = List.of(1L, 2L);
 
-        when(iCapabilityRepository.deleteByIds(ids))
-                .thenReturn(Mono.error(new RuntimeException("error eliminando capacidades")));
+        when(iCapabilityTechnologyRepository.updateStatusByCapabilityIds(ids, true))
+                .thenReturn(Mono.error(new RuntimeException("error actualizando relaciones")));
 
-        StepVerifier.create(capabilityPersistenceAdapter.deleteCapabilitiesByIds(ids))
+        StepVerifier.create(
+                        capabilityPersistenceAdapter.updateCapabilityTechnologiesStatusByCapabilityIds(ids, true)
+                )
                 .expectErrorMatches(error ->
                         error instanceof RuntimeException &&
-                                error.getMessage().equals("error eliminando capacidades"))
+                                error.getMessage().equals("error actualizando relaciones"))
                 .verify();
     }
 
+    @Test
+    void shouldPropagateErrorWhenUpdatingCapabilitiesStatusFails() {
+        List<Long> ids = List.of(1L, 2L);
+
+        when(iCapabilityRepository.updateStatusByIds(ids, true))
+                .thenReturn(Mono.error(new RuntimeException("error actualizando capacidades")));
+
+        StepVerifier.create(
+                        capabilityPersistenceAdapter.updateCapabilitiesStatusByIds(ids, true)
+                )
+                .expectErrorMatches(error ->
+                        error instanceof RuntimeException &&
+                                error.getMessage().equals("error actualizando capacidades"))
+                .verify();
+    }
 
 }

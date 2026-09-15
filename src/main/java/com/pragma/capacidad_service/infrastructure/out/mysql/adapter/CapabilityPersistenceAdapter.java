@@ -36,7 +36,7 @@ public class CapabilityPersistenceAdapter implements ICapabilityPersistencePort 
 
     @Override
     public Mono<Boolean> existsByName(String name) {
-        return iCapabilityRepository.existsByName(name);
+        return iCapabilityRepository.existsByNameAndStatusTrue(name);
     }
 
     @Override
@@ -123,14 +123,20 @@ public class CapabilityPersistenceAdapter implements ICapabilityPersistencePort 
     }
 
     @Override
-    public Mono<Void> deleteCapabilityTechnologiesByCapabilityIds(List<Long> capabilityIds) {
-        return iCapabilityTechnologyRepository.deleteByCapabilityIds(capabilityIds).then();
+    public Flux<Long> findTechnologyIdsByCapabilityIds(List<Long> capabilityIds) {
+        return iCapabilityTechnologyRepository.findTechnologyIdsByCapabilityIds(capabilityIds);
     }
 
     @Override
-    public Mono<Void> deleteCapabilitiesByIds(List<Long> capabilityIds) {
-        return iCapabilityRepository.deleteByIds(capabilityIds).then();
+    public Mono<Void> updateCapabilityTechnologiesStatusByCapabilityIds(List<Long> capabilityIds, Boolean status) {
+        return iCapabilityTechnologyRepository.updateStatusByCapabilityIds(capabilityIds, status).then();
     }
+
+    @Override
+    public Mono<Void> updateCapabilitiesStatusByIds(List<Long> capabilityIds, Boolean status) {
+        return iCapabilityRepository.updateStatusByIds(capabilityIds, status).then();
+    }
+
 
     private Mono<List<Long>> findTechnologyIdsByCapabilityId(Long capabilityId) {
         return iCapabilityTechnologyRepository.findAllByCapabilityId(capabilityId)
@@ -144,6 +150,7 @@ public class CapabilityPersistenceAdapter implements ICapabilityPersistencePort 
                 .map(item -> CapabilityTechnologyEntity.builder()
                         .capabilityId(capabilityId)
                         .technologyId(item.getId())
+                        .status(true)
                         .build()
                 )
                 .toList();

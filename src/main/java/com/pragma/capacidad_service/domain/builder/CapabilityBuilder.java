@@ -13,6 +13,7 @@ public final class CapabilityBuilder {
         return Capability.builder()
                 .name(capabilityCommand.name())
                 .description(capabilityCommand.description())
+                .status(true)
                 .technologies(capabilityCommand.technologyIds().stream()
                         .map(CapabilityBuilder::buildTechnology)
                         .toList())

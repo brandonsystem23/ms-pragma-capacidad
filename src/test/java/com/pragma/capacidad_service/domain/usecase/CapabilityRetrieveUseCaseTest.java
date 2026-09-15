@@ -47,6 +47,7 @@ class CapabilityRetrieveUseCaseTest {
                 .id(1L)
                 .name("Backend")
                 .description("Capacidad backend")
+                .status(true)
                 .technologies(List.of(
                         Technology.builder().id(1L).build(),
                         Technology.builder().id(2L).build()
@@ -80,6 +81,7 @@ class CapabilityRetrieveUseCaseTest {
                 .assertNext(result -> {
                     Assertions.assertEquals(1, result.content().size());
                     Assertions.assertEquals("Backend", result.content().getFirst().getName());
+                    Assertions.assertEquals(true, result.content().getFirst().getStatus());
                     Assertions.assertEquals(2, result.content().getFirst().getTechnologies().size());
                     Assertions.assertEquals("Java", result.content().getFirst().getTechnologies().get(0).getName());
                     Assertions.assertEquals("Spring Boot", result.content().getFirst().getTechnologies().get(1).getName());
@@ -140,6 +142,7 @@ class CapabilityRetrieveUseCaseTest {
                 .id(1L)
                 .name("Backend")
                 .description("Capacidad backend")
+                .status(true)
                 .technologies(List.of(
                         Technology.builder().id(1L).build()
                 ))
@@ -209,6 +212,7 @@ class CapabilityRetrieveUseCaseTest {
                 .id(1L)
                 .name("Backend")
                 .description("Capacidad backend")
+                .status(true)
                 .technologies(List.of(
                         Technology.builder().id(1L).build(),
                         Technology.builder().id(2L).build()
@@ -219,6 +223,7 @@ class CapabilityRetrieveUseCaseTest {
                 .id(2L)
                 .name("Frontend")
                 .description("Capacidad frontend")
+                .status(true)
                 .technologies(List.of(
                         Technology.builder().id(3L).build()
                 ))
@@ -264,6 +269,11 @@ class CapabilityRetrieveUseCaseTest {
                     );
 
                     Assertions.assertEquals(
+                            true,
+                            result.getStatus()
+                    );
+
+                    Assertions.assertEquals(
                             2,
                             result.getTechnologies().size()
                     );
@@ -287,6 +297,11 @@ class CapabilityRetrieveUseCaseTest {
                     Assertions.assertEquals(
                             "Frontend",
                             result.getName()
+                    );
+
+                    Assertions.assertEquals(
+                            true,
+                            result.getStatus()
                     );
 
                     Assertions.assertEquals(

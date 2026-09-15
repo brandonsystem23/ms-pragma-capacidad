@@ -19,5 +19,7 @@ public class Capability {
 
     String description;
 
+    Boolean status;
+
     List<Technology> technologies;
 }

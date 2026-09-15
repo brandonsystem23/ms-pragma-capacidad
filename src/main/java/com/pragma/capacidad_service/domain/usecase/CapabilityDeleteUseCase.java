@@ -21,19 +21,21 @@ public class CapabilityDeleteUseCase implements ICapabilityDeleteServicePort {
 
     @Override
     public Mono<Void> deleteByIds(List<Long> ids, String token) {
-        if (ids == null || ids.isEmpty()) {
-            return Mono.error(new DomainException(
-                    DomainErrorCode.VALIDATION_ERROR,
-                    DomainErrorMessages.DELETE_IDS_REQUIRED
-            ));
-        }
+        return Mono.defer(() -> {
+            if (ids == null || ids.isEmpty()) {
+                return Mono.error(new DomainException(
+                        DomainErrorCode.VALIDATION_ERROR,
+                        DomainErrorMessages.DELETE_IDS_REQUIRED
+                ));
+            }
 
-        return iCapabilityPersistencePort.findTechnologyIdsByCapabilityIds(ids)
-                .collectList()
-                .flatMap(technologyIds ->
-                        executeLocalSoftDelete(ids)
-                                .then(Mono.defer(() -> callRemoteDeleteTechnology(ids, technologyIds, token)))
-                );
+            return iCapabilityPersistencePort.findTechnologyIdsByCapabilityIds(ids)
+                    .collectList()
+                    .flatMap(technologyIds ->
+                            executeLocalSoftDelete(ids)
+                                    .then(Mono.defer(() -> callRemoteDeleteTechnology(ids, technologyIds, token)))
+                    );
+        });
     }
 
     private Mono<Void> executeLocalSoftDelete(List<Long> capabilityIds) {

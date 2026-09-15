@@ -67,8 +67,8 @@ public class CapabilityController {
     }
 
     @GetMapping("/by-ids")
-    @Operation(summary = "Obtener tecnologias por ids",
-            description = "Retorna las tecnologías encontradas según la lista de ids. Requiere rol ADMINISTRADOR")
+    @Operation(summary = "Obtener capacidades por ids",
+            description = "Retorna las capacidades encontradas según la lista de ids. Requiere rol ADMINISTRADOR")
     public Flux<CapabilityListItemResponse> findByIds(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
             @RequestParam List<Long> ids) {
@@ -80,5 +80,17 @@ public class CapabilityController {
         return iCapabilityHandler.findByIds(ids, token);
     }
 
+    @DeleteMapping("/delete")
+    @Operation(summary = "Eliminar capacidades por ids",
+            description = "Elimina capacidades y sus relaciones, luego invoca el borrado de tecnologías. Requiere rol ADMINISTRADOR")
+    public Mono<Void> deleteByIds(
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
+            @RequestBody List<Long> ids
+    ) {
+        log.info("Petición para eliminar capacidades por ids");
 
+        String token = UtilTokenExtractor.extract(authorizationHeader);
+
+        return iCapabilityHandler.deleteByIds(ids, token);
+    }
 }

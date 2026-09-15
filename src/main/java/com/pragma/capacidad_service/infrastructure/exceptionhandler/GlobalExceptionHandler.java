@@ -60,7 +60,7 @@ public class GlobalExceptionHandler {
                  INVALID_PAGE,
                  INVALID_SIZE,
                  INVALID_SORT_BY,
-                 INVALID_DIRECTION -> HttpStatus.BAD_REQUEST;
+                 INVALID_DIRECTION-> HttpStatus.BAD_REQUEST;
 
             case INVALID_TOKEN -> HttpStatus.UNAUTHORIZED;
 

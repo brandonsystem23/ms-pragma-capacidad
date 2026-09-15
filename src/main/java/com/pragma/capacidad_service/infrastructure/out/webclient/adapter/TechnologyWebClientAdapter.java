@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -30,14 +31,17 @@ public class TechnologyWebClientAdapter implements ITechnologyWebClientPort {
     private final WebClient technologyWebClient;
     private final String technologyPath;
     private final String technologyByIdsPath;
+    private final String technologyDeletePath;
 
     public TechnologyWebClientAdapter(
             @Qualifier("technologyWebClient") WebClient technologyWebClient,
             @Value("${clients.technology.path}") String technologyPath,
-            @Value("${clients.technology.by-ids-path}") String technologyByIdsPath) {
+            @Value("${clients.technology.by-ids-path}") String technologyByIdsPath,
+            @Value("${clients.technology.delete-path}") String technologyDeletePath) {
         this.technologyWebClient = technologyWebClient;
         this.technologyPath = technologyPath;
         this.technologyByIdsPath = technologyByIdsPath;
+        this.technologyDeletePath = technologyDeletePath;
     }
 
     @Override
@@ -81,6 +85,24 @@ public class TechnologyWebClientAdapter implements ITechnologyWebClientPort {
                 .retry(2);
     }
 
+    @Override
+    public Mono<Void> deleteByIds(List<Long> ids, String token) {
+        Map<String, String> mapHeaders = new HashMap<>();
+        mapHeaders.put(HttpHeaders.AUTHORIZATION, "Bearer " + token);
+
+        return bodyDeleteClientPath(technologyWebClient, technologyDeletePath, mapHeaders, ids)
+                .onStatus(
+                        HttpStatusCode::is4xxClientError,
+                        this::handleClientError
+                )
+                .onStatus(
+                        HttpStatusCode::is5xxServerError,
+                        this::handleServerError
+                )
+                .bodyToMono(Void.class)
+                .retry(2);
+    }
+
     private static WebClient.ResponseSpec bodyClientPath(
             WebClient webClient,
             String path,
@@ -94,6 +116,27 @@ public class TechnologyWebClientAdapter implements ITechnologyWebClientPort {
                 .build();
 
         return webClient.post()
+                .uri(path)
+                .headers(httpHeaders -> mapHeaders.forEach(httpHeaders::set))
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .retrieve();
+    }
+
+    private static WebClient.ResponseSpec bodyDeleteClientPath(
+            WebClient webClient,
+            String path,
+            Map<String, String> mapHeaders,
+            List<Long> ids) {
+
+        log.info("Eliminando tecnologías con IDs: {}", ids);
+
+        TechnologyRequest request = TechnologyRequest.builder()
+                .ids(ids)
+                .build();
+
+        return webClient.method(HttpMethod.DELETE)
                 .uri(path)
                 .headers(httpHeaders -> mapHeaders.forEach(httpHeaders::set))
                 .contentType(MediaType.APPLICATION_JSON)

@@ -5,6 +5,7 @@ import com.pragma.capacidad_service.application.dto.response.CapabilityListItemR
 import com.pragma.capacidad_service.application.dto.response.CapabilityResponse;
 import com.pragma.capacidad_service.application.dto.response.TechnologyBasicResponse;
 import com.pragma.capacidad_service.application.mapper.CapabilityDtoMapper;
+import com.pragma.capacidad_service.domain.api.ICapabilityDeleteServicePort;
 import com.pragma.capacidad_service.domain.api.ICapabilityExistsByIdsServicePort;
 import com.pragma.capacidad_service.domain.api.ICapabilityRegisterServicePort;
 import com.pragma.capacidad_service.domain.api.ICapabilityRetrieveServicePort;
@@ -39,8 +40,10 @@ class CapabilityHandlerTest {
     private ICapabilityExistsByIdsServicePort iCapabilityExistsByIdsServicePort;
 
     @Mock
-    private CapabilityDtoMapper capabilityDtoMapper;
+    private ICapabilityDeleteServicePort iCapabilityDeleteServicePort;
 
+    @Mock
+    private CapabilityDtoMapper capabilityDtoMapper;
 
     @InjectMocks
     private CapabilityHandler capabilityHandler;
@@ -297,4 +300,30 @@ class CapabilityHandlerTest {
                 .verify();
     }
 
+    @Test
+    void shouldDeleteCapabilitiesByIdsSuccessfully() {
+        List<Long> ids = List.of(1L, 2L);
+        String token = "token";
+
+        when(iCapabilityDeleteServicePort.deleteByIds(ids, token))
+                .thenReturn(Mono.empty());
+
+        StepVerifier.create(capabilityHandler.deleteByIds(ids, token))
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldPropagateErrorWhenDeleteByIdsFails() {
+        List<Long> ids = List.of(1L, 2L);
+        String token = "token";
+
+        when(iCapabilityDeleteServicePort.deleteByIds(ids, token))
+                .thenReturn(Mono.error(new RuntimeException("error eliminando capacidades")));
+
+        StepVerifier.create(capabilityHandler.deleteByIds(ids, token))
+                .expectErrorMatches(error ->
+                        error instanceof RuntimeException &&
+                                error.getMessage().equals("error eliminando capacidades"))
+                .verify();
+    }
 }

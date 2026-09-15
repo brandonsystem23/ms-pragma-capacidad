@@ -6,6 +6,7 @@ import com.pragma.capacidad_service.application.dto.response.CapabilityResponse;
 import com.pragma.capacidad_service.application.dto.response.PagedCapabilityResponse;
 import com.pragma.capacidad_service.application.handler.ICapabilityHandler;
 import com.pragma.capacidad_service.application.mapper.CapabilityDtoMapper;
+import com.pragma.capacidad_service.domain.api.ICapabilityDeleteServicePort;
 import com.pragma.capacidad_service.domain.api.ICapabilityExistsByIdsServicePort;
 import com.pragma.capacidad_service.domain.api.ICapabilityRegisterServicePort;
 import com.pragma.capacidad_service.domain.api.ICapabilityRetrieveServicePort;
@@ -24,6 +25,7 @@ public class CapabilityHandler implements ICapabilityHandler {
     private final ICapabilityRegisterServicePort iCapabilityRegisterServicePort;
     private final ICapabilityRetrieveServicePort iCapabilityRetrieveServicePort;
     private final ICapabilityExistsByIdsServicePort iCapabilityExistsByIdsServicePort;
+    private final ICapabilityDeleteServicePort iCapabilityDeleteServicePort;
     private final CapabilityDtoMapper capabilityDtoMapper;
 
     @Override
@@ -68,5 +70,10 @@ public class CapabilityHandler implements ICapabilityHandler {
     public Flux<CapabilityListItemResponse> findByIds(List<Long> ids, String token) {
         return iCapabilityRetrieveServicePort.retrieveByIds(ids, token)
                 .map(capabilityDtoMapper::toListItemResponse);
+    }
+
+    @Override
+    public Mono<Void> deleteByIds(List<Long> ids, String token) {
+        return iCapabilityDeleteServicePort.deleteByIds(ids, token);
     }
 }

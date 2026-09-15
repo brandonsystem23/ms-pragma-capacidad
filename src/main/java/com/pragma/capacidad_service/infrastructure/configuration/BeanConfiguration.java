@@ -1,11 +1,13 @@
 package com.pragma.capacidad_service.infrastructure.configuration;
 
+import com.pragma.capacidad_service.domain.api.ICapabilityDeleteServicePort;
 import com.pragma.capacidad_service.domain.api.ICapabilityExistsByIdsServicePort;
 import com.pragma.capacidad_service.domain.api.ICapabilityRegisterServicePort;
 import com.pragma.capacidad_service.domain.api.ICapabilityRetrieveServicePort;
 import com.pragma.capacidad_service.domain.service.TechnologyDetailService;
 import com.pragma.capacidad_service.domain.spi.ICapabilityPersistencePort;
 import com.pragma.capacidad_service.domain.spi.ITechnologyWebClientPort;
+import com.pragma.capacidad_service.domain.usecase.CapabilityDeleteUseCase;
 import com.pragma.capacidad_service.domain.usecase.CapabilityExistsByIdsUseCase;
 import com.pragma.capacidad_service.domain.usecase.CapabilityRegisterUseCase;
 import com.pragma.capacidad_service.domain.usecase.CapabilityRetrieveUseCase;
@@ -13,16 +15,15 @@ import com.pragma.capacidad_service.domain.validation.capability.DomainCapabilit
 import com.pragma.capacidad_service.domain.validation.capability.CapabilityValidator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.reactive.TransactionalOperator;
 
 @Configuration
 public class BeanConfiguration {
-
 
     @Bean
     public DomainCapabilityValidator domainCapabilityValidator() {
         return new DomainCapabilityValidator();
     }
-
 
     @Bean
     public CapabilityValidator capabilityValidator(ICapabilityPersistencePort iCapabilityPersistencePort,
@@ -34,13 +35,14 @@ public class BeanConfiguration {
     public ICapabilityRegisterServicePort capabilityRegisterUseCase(
             ICapabilityPersistencePort iCapabilityPersistencePort,
             DomainCapabilityValidator domainCapabilityValidator,
-            CapabilityValidator capabilityValidator
-
+            CapabilityValidator capabilityValidator,
+            TransactionalOperator transactionalOperator
     ) {
         return new CapabilityRegisterUseCase(
                 iCapabilityPersistencePort,
                 domainCapabilityValidator,
-                capabilityValidator
+                capabilityValidator,
+                transactionalOperator
         );
     }
 
@@ -67,10 +69,22 @@ public class BeanConfiguration {
     }
 
     @Bean
+    public ICapabilityDeleteServicePort capabilityDeleteUseCase(
+            ICapabilityPersistencePort iCapabilityPersistencePort,
+            ITechnologyWebClientPort iTechnologyWebClientPort,
+            TransactionalOperator transactionalOperator
+    ) {
+        return new CapabilityDeleteUseCase(
+                iCapabilityPersistencePort,
+                iTechnologyWebClientPort,
+                transactionalOperator
+        );
+    }
+
+    @Bean
     public TechnologyDetailService technologyDetailService(
             ITechnologyWebClientPort iTechnologyWebClientPort
     ) {
         return new TechnologyDetailService(iTechnologyWebClientPort);
     }
-
 }

@@ -24,4 +24,6 @@ public interface ICapabilityHandler {
     Mono<List<Long>> existsByIds(List<Long> ids);
 
     Flux<CapabilityListItemResponse> findByIds(List<Long> ids, String token);
+
+    Mono<Void> deleteByIds(List<Long> ids, String token);
 }

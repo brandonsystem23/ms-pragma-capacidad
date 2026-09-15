@@ -12,6 +12,7 @@ import com.pragma.capacidad_service.infrastructure.out.mysql.repository.ICapabil
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -25,13 +26,15 @@ public class CapabilityPersistenceAdapter implements ICapabilityPersistencePort 
     private final ICapabilityRepository iCapabilityRepository;
     private final ICapabilityTechnologyRepository iCapabilityTechnologyRepository;
     private final CapabilityEntityMapper capabilityEntityMapper;
+    private final TransactionalOperator transactionalOperator;
 
     @Override
     public Mono<Capability> save(Capability capability) {
         CapabilityEntity capabilityEntity = capabilityEntityMapper.toEntity(capability);
         return iCapabilityRepository.save(capabilityEntity)
                 .flatMap(savedCapabilityEntity -> saveItems(savedCapabilityEntity.getId(), capability.getTechnologies())
-                        .map(savedItems -> buildOrder(savedCapabilityEntity, savedItems)));
+                        .map(savedItems -> buildOrder(savedCapabilityEntity, savedItems)))
+                .as(transactionalOperator::transactional);
     }
 
     @Override

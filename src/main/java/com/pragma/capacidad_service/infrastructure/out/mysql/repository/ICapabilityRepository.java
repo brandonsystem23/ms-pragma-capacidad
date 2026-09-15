@@ -11,64 +11,85 @@ import java.util.List;
 
 public interface ICapabilityRepository extends ReactiveCrudRepository<CapabilityEntity, Long> {
 
-    Mono<Boolean> existsByName(String name);
+    Mono<Boolean> existsByNameAndStatusTrue(String name);
 
     @Query("""
-            SELECT c.id, c.name, c.description, COUNT(ct.technology_id) AS number_technologies
+            SELECT c.id, c.name, c.description, c.status
             FROM capability c
-            LEFT JOIN capability_technology ct ON c.id = ct.capability_id
-            GROUP BY c.id, c.name, c.description
+            LEFT JOIN capability_technology ct
+                ON c.id = ct.capability_id AND ct.status = true
+            WHERE c.status = true
+            GROUP BY c.id, c.name, c.description, c.status
             ORDER BY c.name ASC
             LIMIT :size OFFSET :offset
             """)
     Flux<CapabilityEntity> findAllOrderByNameAsc(int size, long offset);
 
     @Query("""
-            SELECT c.id, c.name, c.description, COUNT(ct.technology_id) AS number_technologies
+            SELECT c.id, c.name, c.description, c.status
             FROM capability c
-            LEFT JOIN capability_technology ct ON c.id = ct.capability_id
-            GROUP BY c.id, c.name, c.description
+            LEFT JOIN capability_technology ct
+                ON c.id = ct.capability_id AND ct.status = true
+            WHERE c.status = true
+            GROUP BY c.id, c.name, c.description, c.status
             ORDER BY c.name DESC
             LIMIT :size OFFSET :offset
             """)
     Flux<CapabilityEntity> findAllOrderByNameDesc(int size, long offset);
 
     @Query("""
-            SELECT c.id, c.name, c.description, COUNT(ct.technology_id) AS number_technologies
+            SELECT c.id, c.name, c.description, c.status
             FROM capability c
-            LEFT JOIN capability_technology ct ON c.id = ct.capability_id
-            GROUP BY c.id, c.name, c.description
+            LEFT JOIN capability_technology ct
+                ON c.id = ct.capability_id AND ct.status = true
+            WHERE c.status = true
+            GROUP BY c.id, c.name, c.description, c.status
             ORDER BY COUNT(ct.technology_id) ASC, c.name ASC
             LIMIT :size OFFSET :offset
             """)
     Flux<CapabilityEntity> findAllOrderByTechnologyCountAsc(int size, long offset);
 
     @Query("""
-            SELECT c.id, c.name, c.description, COUNT(ct.technology_id) AS number_technologies
+            SELECT c.id, c.name, c.description, c.status
             FROM capability c
-            LEFT JOIN capability_technology ct ON c.id = ct.capability_id
-            GROUP BY c.id, c.name, c.description
+            LEFT JOIN capability_technology ct
+                ON c.id = ct.capability_id AND ct.status = true
+            WHERE c.status = true
+            GROUP BY c.id, c.name, c.description, c.status
             ORDER BY COUNT(ct.technology_id) DESC, c.name ASC
             LIMIT :size OFFSET :offset
             """)
     Flux<CapabilityEntity> findAllOrderByTechnologyCountDesc(int size, long offset);
 
-    @Query("SELECT COUNT(*) FROM capability")
+    @Query("""
+            SELECT COUNT(*)
+            FROM capability
+            WHERE status = true
+            """)
     Mono<Long> countAllCapabilities();
 
     @Query("""
         SELECT id
         FROM capability
         WHERE id IN (:ids)
+          AND status = true
         """)
     Flux<Long> findExistingIds(List<Long> ids);
 
+    @Query("""
+        SELECT id, name, description, status
+        FROM capability
+        WHERE id IN (:ids)
+          AND status = true
+        """)
     Flux<CapabilityEntity> findByIdIn(List<Long> ids);
 
     @Modifying
     @Query("""
-        DELETE FROM capability
-        WHERE id IN (:ids)
-        """)
-    Mono<Integer> deleteByIds(List<Long> ids);
+    UPDATE capability
+    SET status = :status
+    WHERE id IN (:ids)
+    """)
+    Mono<Integer> updateStatusByIds(List<Long> ids, Boolean status);
+
 }

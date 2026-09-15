@@ -21,5 +21,5 @@ public class CapabilityEntity {
 
     private String description;
 
-
+    private Boolean status;
 }

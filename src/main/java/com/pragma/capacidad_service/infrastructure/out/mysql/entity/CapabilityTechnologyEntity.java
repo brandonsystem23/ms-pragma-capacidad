@@ -24,4 +24,5 @@ public class CapabilityTechnologyEntity {
     @Column("technology_id")
     private Long technologyId;
 
+    private Boolean status;
 }

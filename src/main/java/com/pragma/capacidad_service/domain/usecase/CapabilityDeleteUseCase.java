@@ -4,8 +4,6 @@ import com.pragma.capacidad_service.domain.api.ICapabilityDeleteServicePort;
 import com.pragma.capacidad_service.domain.exception.DomainErrorCode;
 import com.pragma.capacidad_service.domain.exception.DomainErrorMessages;
 import com.pragma.capacidad_service.domain.exception.DomainException;
-import com.pragma.capacidad_service.domain.model.Capability;
-import com.pragma.capacidad_service.domain.model.Technology;
 import com.pragma.capacidad_service.domain.spi.ICapabilityPersistencePort;
 import com.pragma.capacidad_service.domain.spi.ITechnologyWebClientPort;
 import lombok.RequiredArgsConstructor;
@@ -23,45 +21,46 @@ public class CapabilityDeleteUseCase implements ICapabilityDeleteServicePort {
 
     @Override
     public Mono<Void> deleteByIds(List<Long> ids, String token) {
-        return Mono.defer(() -> {
-                    if (ids == null || ids.isEmpty()) {
-                        return Mono.error(new DomainException(
-                                DomainErrorCode.VALIDATION_ERROR,
-                                DomainErrorMessages.DELETE_IDS_REQUIRED
-                        ));
-                    }
+        if (ids == null || ids.isEmpty()) {
+            return Mono.error(new DomainException(
+                    DomainErrorCode.VALIDATION_ERROR,
+                    DomainErrorMessages.DELETE_IDS_REQUIRED
+            ));
+        }
 
-                    return iCapabilityPersistencePort.findByIds(ids)
-                            .collectList()
-                            .flatMap(capabilities -> executeDelete(ids, capabilities, token));
-                })
-                .as(transactionalOperator::transactional)
-                .onErrorMap(throwable -> {
-                    if (throwable instanceof DomainException) {
-                        return throwable;
-                    }
-
-                    return new DomainException(
-                            DomainErrorCode.INTERNAL_ERROR,
-                            DomainErrorMessages.CAPABILITY_DELETE_ROLLBACK_ERROR
-                    );
-                });
+        return iCapabilityPersistencePort.findTechnologyIdsByCapabilityIds(ids)
+                .collectList()
+                .flatMap(technologyIds ->
+                        executeLocalSoftDelete(ids)
+                                .then(Mono.defer(() -> callRemoteDeleteTechnology(ids, technologyIds, token)))
+                );
     }
 
-    private Mono<Void> executeDelete(List<Long> capabilityIds, List<Capability> capabilities, String token) {
-        List<Long> technologyIds = capabilities.stream()
-                .flatMap(capability -> capability.getTechnologies().stream())
-                .map(Technology::getId)
-                .distinct()
-                .toList();
+    private Mono<Void> executeLocalSoftDelete(List<Long> capabilityIds) {
+        return iCapabilityPersistencePort.updateCapabilityTechnologiesStatusByCapabilityIds(capabilityIds, false)
+                .then(iCapabilityPersistencePort.updateCapabilitiesStatusByIds(capabilityIds, false))
+                .as(transactionalOperator::transactional);
+    }
 
-        return iCapabilityPersistencePort.deleteCapabilityTechnologiesByCapabilityIds(capabilityIds)
-                .then(Mono.defer(() -> iCapabilityPersistencePort.deleteCapabilitiesByIds(capabilityIds)))
-                .then(Mono.defer(() -> {
-                    if (technologyIds.isEmpty()) {
-                        return Mono.empty();
-                    }
-                    return iTechnologyWebClientPort.deleteByIds(technologyIds, token);
-                }));
+    private Mono<Void> callRemoteDeleteTechnology(List<Long> capabilityIds, List<Long> technologyIds, String token) {
+
+        if (technologyIds.isEmpty()) {
+            return Mono.empty();
+        }
+
+        return iTechnologyWebClientPort.deleteByIds(technologyIds, token)
+                .onErrorResume(throwable ->
+                        rollbackStatuses(capabilityIds)
+                                .then(Mono.error(new DomainException(
+                                        DomainErrorCode.INTERNAL_ERROR,
+                                        DomainErrorMessages.CAPABILITY_DELETE_ROLLBACK_ERROR
+                                )))
+                );
+    }
+
+    private Mono<Void> rollbackStatuses(List<Long> capabilityIds) {
+        return iCapabilityPersistencePort.updateCapabilityTechnologiesStatusByCapabilityIds(capabilityIds, true)
+                .then(iCapabilityPersistencePort.updateCapabilitiesStatusByIds(capabilityIds, true))
+                .as(transactionalOperator::transactional);
     }
 }

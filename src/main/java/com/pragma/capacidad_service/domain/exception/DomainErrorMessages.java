@@ -19,7 +19,7 @@ public final class DomainErrorMessages {
     public static final String INVALID_DIRECTION = "El parámetro direction solo permite: asc, desc";
     public static final String DELETE_IDS_REQUIRED = "La lista de ids de capacidades no puede estar vacía";
     public static final String CAPABILITY_DELETE_ROLLBACK_ERROR =
-            "Ocurrió un error durante la eliminación transaccional de capacidades. Se realizó rollback de la operación";
+            "Ocurrió un error durante la eliminación lógica de capacidades. Se restauró el estado original por fallo del proceso";
     public static final String CAPABILITY_SAVE_ROLLBACK_ERROR =
             "Ocurrió un error durante el registro transaccional de capacidades. Se realizó rollback de la operación";
 }

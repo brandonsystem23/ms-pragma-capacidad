@@ -19,7 +19,9 @@ public interface ICapabilityPersistencePort {
 
     Flux<Capability> findByIds(List<Long> ids);
 
-    Mono<Void> deleteCapabilityTechnologiesByCapabilityIds(List<Long> capabilityIds);
+    Flux<Long> findTechnologyIdsByCapabilityIds(List<Long> capabilityIds);
 
-    Mono<Void> deleteCapabilitiesByIds(List<Long> capabilityIds);
+    Mono<Void> updateCapabilityTechnologiesStatusByCapabilityIds(List<Long> capabilityIds, Boolean status);
+
+    Mono<Void> updateCapabilitiesStatusByIds(List<Long> capabilityIds, Boolean status);
 }

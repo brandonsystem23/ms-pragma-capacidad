@@ -35,6 +35,15 @@ public class CapabilityDeleteUseCase implements ICapabilityDeleteServicePort {
                             executeLocalSoftDelete(ids)
                                     .then(Mono.defer(() -> callRemoteDeleteTechnology(ids, technologyIds, token)))
                     );
+        }).onErrorMap(throwable -> {
+            if (throwable instanceof DomainException) {
+                return throwable;
+            }
+
+            return new DomainException(
+                    DomainErrorCode.INTERNAL_ERROR,
+                    DomainErrorMessages.CAPABILITY_DELETE_ROLLBACK_ERROR
+            );
         });
     }
 

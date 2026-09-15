@@ -12,7 +12,6 @@ import com.pragma.capacidad_service.infrastructure.out.mysql.repository.ICapabil
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -26,15 +25,13 @@ public class CapabilityPersistenceAdapter implements ICapabilityPersistencePort 
     private final ICapabilityRepository iCapabilityRepository;
     private final ICapabilityTechnologyRepository iCapabilityTechnologyRepository;
     private final CapabilityEntityMapper capabilityEntityMapper;
-    private final TransactionalOperator transactionalOperator;
 
     @Override
     public Mono<Capability> save(Capability capability) {
         CapabilityEntity capabilityEntity = capabilityEntityMapper.toEntity(capability);
         return iCapabilityRepository.save(capabilityEntity)
                 .flatMap(savedCapabilityEntity -> saveItems(savedCapabilityEntity.getId(), capability.getTechnologies())
-                        .map(savedItems -> buildOrder(savedCapabilityEntity, savedItems)))
-                .as(transactionalOperator::transactional);
+                        .map(savedItems -> buildOrder(savedCapabilityEntity, savedItems)));
     }
 
     @Override
@@ -108,21 +105,31 @@ public class CapabilityPersistenceAdapter implements ICapabilityPersistencePort 
     public Flux<Capability> findByIds(List<Long> ids) {
         return iCapabilityRepository.findByIdIn(ids)
                 .concatMap(capabilityEntity ->
-                    findTechnologyIdsByCapabilityId(capabilityEntity.getId())
-                            .map(technologyIds -> {
-                                Capability capability = capabilityEntityMapper.toDomain(capabilityEntity);
+                        findTechnologyIdsByCapabilityId(capabilityEntity.getId())
+                                .map(technologyIds -> {
+                                    Capability capability = capabilityEntityMapper.toDomain(capabilityEntity);
 
-                                List<Technology> technologies = technologyIds.stream()
-                                        .map(technologyId -> Technology.builder()
-                                                .id(technologyId)
-                                                .build())
-                                        .toList();
+                                    List<Technology> technologies = technologyIds.stream()
+                                            .map(technologyId -> Technology.builder()
+                                                    .id(technologyId)
+                                                    .build())
+                                            .toList();
 
-                                capability.setTechnologies(technologies);
+                                    capability.setTechnologies(technologies);
 
-                                return capability;
-                            })
+                                    return capability;
+                                })
                 );
+    }
+
+    @Override
+    public Mono<Void> deleteCapabilityTechnologiesByCapabilityIds(List<Long> capabilityIds) {
+        return iCapabilityTechnologyRepository.deleteByCapabilityIds(capabilityIds).then();
+    }
+
+    @Override
+    public Mono<Void> deleteCapabilitiesByIds(List<Long> capabilityIds) {
+        return iCapabilityRepository.deleteByIds(capabilityIds).then();
     }
 
     private Mono<List<Long>> findTechnologyIdsByCapabilityId(Long capabilityId) {

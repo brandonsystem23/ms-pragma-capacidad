@@ -1,5 +1,8 @@
 package com.pragma.capacidad_service.domain.usecase;
 
+import com.pragma.capacidad_service.domain.exception.DomainErrorCode;
+import com.pragma.capacidad_service.domain.exception.DomainErrorMessages;
+import com.pragma.capacidad_service.domain.exception.DomainException;
 import com.pragma.capacidad_service.domain.model.Capability;
 import com.pragma.capacidad_service.domain.model.command.CapabilityCommand;
 import com.pragma.capacidad_service.domain.spi.ICapabilityPersistencePort;
@@ -11,11 +14,13 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
@@ -30,6 +35,9 @@ class CapabilityRegisterUseCaseTest {
 
     @Mock
     private CapabilityValidator capabilityValidator;
+
+    @Mock
+    private TransactionalOperator transactionalOperator;
 
     @InjectMocks
     private CapabilityRegisterUseCase capabilityRegisterUseCase;
@@ -65,6 +73,9 @@ class CapabilityRegisterUseCaseTest {
                 ArgumentMatchers.any(Capability.class)
         )).thenReturn(Mono.just(savedCapability));
 
+        when(transactionalOperator.transactional(any(Mono.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
         StepVerifier.create(
                         capabilityRegisterUseCase.create(command, token)
                 )
@@ -73,7 +84,7 @@ class CapabilityRegisterUseCaseTest {
     }
 
     @Test
-    void shouldPropagateErrorWhenCapabilityValidationFails() {
+    void shouldPropagateDomainExceptionWhenCapabilityValidationFails() {
 
         String token = "Bearer token";
 
@@ -81,6 +92,11 @@ class CapabilityRegisterUseCaseTest {
                 "Desarrollo Backend",
                 "Capacidad para desarrollar servicios backend",
                 List.of(1L, 2L, 3L)
+        );
+
+        DomainException domainException = new DomainException(
+                DomainErrorCode.DUPLICATE_NAME,
+                DomainErrorMessages.DUPLICATE_NAME
         );
 
         doNothing()
@@ -91,22 +107,24 @@ class CapabilityRegisterUseCaseTest {
                 command.name(),
                 command.technologyIds(),
                 token
-        )).thenReturn(
-                Mono.error(new RuntimeException("error validando capacidad"))
-        );
+        )).thenReturn(Mono.error(domainException));
+
+        when(transactionalOperator.transactional(any(Mono.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         StepVerifier.create(
                         capabilityRegisterUseCase.create(command, token)
                 )
                 .expectErrorMatches(error ->
-                        error instanceof RuntimeException &&
-                                error.getMessage().equals("error validando capacidad")
+                        error instanceof DomainException &&
+                                ((DomainException) error).getCode() == DomainErrorCode.DUPLICATE_NAME &&
+                                error.getMessage().equals(DomainErrorMessages.DUPLICATE_NAME)
                 )
                 .verify();
     }
 
     @Test
-    void shouldPropagateErrorWhenSaveFails() {
+    void shouldReturnRollbackDomainExceptionWhenSaveFails() {
 
         String token = "Bearer token";
 
@@ -132,12 +150,16 @@ class CapabilityRegisterUseCaseTest {
                 Mono.error(new RuntimeException("error guardando capacidad"))
         );
 
+        when(transactionalOperator.transactional(any(Mono.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
         StepVerifier.create(
                         capabilityRegisterUseCase.create(command, token)
                 )
                 .expectErrorMatches(error ->
-                        error instanceof RuntimeException &&
-                                error.getMessage().equals("error guardando capacidad")
+                        error instanceof DomainException &&
+                                ((DomainException) error).getCode() == DomainErrorCode.INTERNAL_ERROR &&
+                                error.getMessage().equals(DomainErrorMessages.CAPABILITY_SAVE_ROLLBACK_ERROR)
                 )
                 .verify();
     }

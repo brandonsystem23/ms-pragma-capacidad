@@ -12,14 +12,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -35,9 +33,6 @@ class CapabilityPersistenceAdapterTest {
 
     @Mock
     private CapabilityEntityMapper capabilityEntityMapper;
-
-    @Mock
-    private TransactionalOperator transactionalOperator;
 
     @InjectMocks
     private CapabilityPersistenceAdapter capabilityPersistenceAdapter;
@@ -109,9 +104,6 @@ class CapabilityPersistenceAdapterTest {
 
         when(capabilityEntityMapper.toDomain(savedEntity))
                 .thenReturn(savedCapability);
-
-        when(transactionalOperator.transactional(any(Mono.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
 
         StepVerifier.create(
                         capabilityPersistenceAdapter.save(capability)
@@ -204,9 +196,6 @@ class CapabilityPersistenceAdapterTest {
         when(iCapabilityRepository.save(entity))
                 .thenReturn(Mono.error(exception));
 
-        when(transactionalOperator.transactional(any(Mono.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
         StepVerifier.create(
                         capabilityPersistenceAdapter.save(capability)
                 )
@@ -253,9 +242,6 @@ class CapabilityPersistenceAdapterTest {
 
         when(iCapabilityTechnologyRepository.saveAll(anyList()))
                 .thenReturn(Flux.error(exception));
-
-        when(transactionalOperator.transactional(any(Mono.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
 
         StepVerifier.create(
                         capabilityPersistenceAdapter.save(capability)
@@ -899,5 +885,56 @@ class CapabilityPersistenceAdapterTest {
                 )
                 .verify();
     }
+
+    @Test
+    void shouldDeleteCapabilityTechnologiesByCapabilityIdsSuccessfully() {
+        List<Long> ids = List.of(1L, 2L);
+
+        when(iCapabilityTechnologyRepository.deleteByCapabilityIds(ids))
+                .thenReturn(Mono.just(2));
+
+        StepVerifier.create(capabilityPersistenceAdapter.deleteCapabilityTechnologiesByCapabilityIds(ids))
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldDeleteCapabilitiesByIdsSuccessfully() {
+        List<Long> ids = List.of(1L, 2L);
+
+        when(iCapabilityRepository.deleteByIds(ids))
+                .thenReturn(Mono.just(2));
+
+        StepVerifier.create(capabilityPersistenceAdapter.deleteCapabilitiesByIds(ids))
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldPropagateErrorWhenDeletingCapabilityTechnologiesFails() {
+        List<Long> ids = List.of(1L, 2L);
+
+        when(iCapabilityTechnologyRepository.deleteByCapabilityIds(ids))
+                .thenReturn(Mono.error(new RuntimeException("error eliminando relaciones")));
+
+        StepVerifier.create(capabilityPersistenceAdapter.deleteCapabilityTechnologiesByCapabilityIds(ids))
+                .expectErrorMatches(error ->
+                        error instanceof RuntimeException &&
+                                error.getMessage().equals("error eliminando relaciones"))
+                .verify();
+    }
+
+    @Test
+    void shouldPropagateErrorWhenDeletingCapabilitiesFails() {
+        List<Long> ids = List.of(1L, 2L);
+
+        when(iCapabilityRepository.deleteByIds(ids))
+                .thenReturn(Mono.error(new RuntimeException("error eliminando capacidades")));
+
+        StepVerifier.create(capabilityPersistenceAdapter.deleteCapabilitiesByIds(ids))
+                .expectErrorMatches(error ->
+                        error instanceof RuntimeException &&
+                                error.getMessage().equals("error eliminando capacidades"))
+                .verify();
+    }
+
 
 }

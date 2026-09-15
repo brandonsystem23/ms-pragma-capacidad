@@ -33,7 +33,8 @@ class TechnologyWebClientAdapterTest {
         technologyWebClientAdapter = new TechnologyWebClientAdapter(
                 technologyWebClient,
                 "/api/v1/technology/exists-by-ids",
-                "/api/v1/technology/by-ids"
+                "/api/v1/technology/by-ids",
+                "/api/v1/technology/delete"
         );
     }
 
@@ -137,25 +138,55 @@ class TechnologyWebClientAdapterTest {
     }
 
     @Test
-    void shouldReturnEmptyListWhenNoTechnologiesFoundByIds() {
-
+    void shouldDeleteTechnologiesByIdsSuccessfully() {
         mockWebServer.enqueue(
                 new MockResponse()
                         .setResponseCode(200)
-                        .addHeader("Content-Type", "application/json")
-                        .setBody("[]")
         );
 
         StepVerifier.create(
-                        technologyWebClientAdapter.findByIds(
-                                List.of(999L),
+                        technologyWebClientAdapter.deleteByIds(
+                                List.of(1L, 2L, 3L),
                                 "token"
                         )
                 )
-                .assertNext(technologies ->
-                        Assertions.assertTrue(technologies.isEmpty())
-                )
                 .verifyComplete();
+    }
+
+    @Test
+    void shouldReturnExternalServiceExceptionWhenDeleteByIdsServerErrorOccurs() {
+        enqueueErrorResponse(
+                500,
+                "Ocurrió un error durante la eliminación transaccional de tecnologías. Se realizó rollback de la operación"
+        );
+
+        StepVerifier.create(
+                        technologyWebClientAdapter.deleteByIds(
+                                List.of(1L, 2L, 3L),
+                                "token"
+                        )
+                )
+                .expectErrorSatisfies(throwable -> {
+
+                    Assertions.assertInstanceOf(
+                            ExternalServiceException.class,
+                            throwable
+                    );
+
+                    ExternalServiceException exception =
+                            (ExternalServiceException) throwable;
+
+                    Assertions.assertEquals(
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            exception.getStatus()
+                    );
+
+                    Assertions.assertEquals(
+                            "Ocurrió un error durante la eliminación transaccional de tecnologías. Se realizó rollback de la operación",
+                            exception.getMessage()
+                    );
+                })
+                .verify();
     }
 
     @Test
@@ -394,5 +425,4 @@ class TechnologyWebClientAdapterTest {
             mockWebServer.enqueue(response);
         }
     }
-
 }

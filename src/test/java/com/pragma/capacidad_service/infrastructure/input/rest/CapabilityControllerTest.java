@@ -199,7 +199,6 @@ class CapabilityControllerTest {
         verify(iCapabilityHandler).getCapabilities(0, 10, "name", "asc", token);
     }
 
-
     @Test
     void shouldReturnExistingTechnologyIdsSuccessfully() {
         List<Long> ids = List.of(1L, 2L, 3L);
@@ -304,4 +303,32 @@ class CapabilityControllerTest {
                 .verify();
     }
 
+    @Test
+    void shouldDeleteCapabilitiesByIdsSuccessfully() {
+        String authorizationHeader = "Bearer token";
+        String token = "token";
+        List<Long> ids = List.of(1L, 2L);
+
+        when(iCapabilityHandler.deleteByIds(ids, token))
+                .thenReturn(Mono.empty());
+
+        StepVerifier.create(capabilityController.deleteByIds(authorizationHeader, ids))
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldPropagateErrorWhenDeleteByIdsFails() {
+        String authorizationHeader = "Bearer token";
+        String token = "token";
+        List<Long> ids = List.of(1L, 2L);
+
+        when(iCapabilityHandler.deleteByIds(ids, token))
+                .thenReturn(Mono.error(new RuntimeException("error eliminando capacidades")));
+
+        StepVerifier.create(capabilityController.deleteByIds(authorizationHeader, ids))
+                .expectErrorMatches(error ->
+                        error instanceof RuntimeException &&
+                                error.getMessage().equals("error eliminando capacidades"))
+                .verify();
+    }
 }

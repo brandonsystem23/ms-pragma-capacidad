@@ -24,6 +24,7 @@ clients:
     base-url: ${USERS_SERVICE_URL:http://localhost:8082}
     path: /api/v1/technology/exists-by-ids
     by-ids-path: /api/v1/technology/by-ids
+    delete-path: /api/v1/technology/delete
 
 
 logging:

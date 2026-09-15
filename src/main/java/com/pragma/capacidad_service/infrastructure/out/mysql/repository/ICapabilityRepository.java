@@ -1,6 +1,7 @@
 package com.pragma.capacidad_service.infrastructure.out.mysql.repository;
 
 import com.pragma.capacidad_service.infrastructure.out.mysql.entity.CapabilityEntity;
+import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;
@@ -63,4 +64,11 @@ public interface ICapabilityRepository extends ReactiveCrudRepository<Capability
     Flux<Long> findExistingIds(List<Long> ids);
 
     Flux<CapabilityEntity> findByIdIn(List<Long> ids);
+
+    @Modifying
+    @Query("""
+        DELETE FROM capability
+        WHERE id IN (:ids)
+        """)
+    Mono<Integer> deleteByIds(List<Long> ids);
 }

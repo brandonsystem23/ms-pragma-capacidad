@@ -10,4 +10,6 @@ public interface ITechnologyWebClientPort {
     Mono<List<Long>> existsByIds(List<Long> ids, String token);
 
     Mono<List<Technology>> findByIds(List<Long> ids, String token);
+
+    Mono<Void> deleteByIds(List<Long> ids, String token);
 }

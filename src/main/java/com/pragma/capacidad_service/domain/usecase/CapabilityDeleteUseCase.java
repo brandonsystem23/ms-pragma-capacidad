@@ -9,8 +9,12 @@ import com.pragma.capacidad_service.domain.spi.ITechnologyWebClientPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
+import java.time.Duration;
 import java.util.List;
+
+import static reactor.netty.http.HttpConnectionLiveness.log;
 
 @RequiredArgsConstructor
 public class CapabilityDeleteUseCase implements ICapabilityDeleteServicePort {
@@ -51,6 +55,20 @@ public class CapabilityDeleteUseCase implements ICapabilityDeleteServicePort {
         return iTechnologyWebClientPort.deleteByIds(technologyIds, token)
                 .onErrorResume(throwable ->
                         updateCapabilityStatus(capabilityIds, true)
+                                .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(2))
+                                        .doBeforeRetry(retrySignal ->
+                                                log.warn("Falló el rollback para las capcidades {}. Reintento #{} debido a: {}",
+                                                        capabilityIds,
+                                                        retrySignal.totalRetries(),
+                                                        retrySignal.failure().getMessage()))
+                                )
+                                .onErrorResume(rollbackError -> {
+                                    log.error("El rollback falló definitivamente tras agotar los reintentos para las capcidades {}", capabilityIds, rollbackError);
+                                    return Mono.error(new DomainException(
+                                            DomainErrorCode.INTERNAL_ERROR,
+                                            DomainErrorMessages.ROLLBACK_ERROR
+                                    ));
+                                })
                                 .then(Mono.error(new DomainException(
                                         DomainErrorCode.INTERNAL_ERROR,
                                         DomainErrorMessages.CAPABILITY_DELETE_ROLLBACK_ERROR

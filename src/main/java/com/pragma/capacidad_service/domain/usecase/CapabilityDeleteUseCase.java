@@ -20,24 +20,23 @@ public class CapabilityDeleteUseCase implements ICapabilityDeleteServicePort {
     private final TransactionalOperator transactionalOperator;
 
     @Override
-    public Mono<Void> deleteByIds(List<Long> ids, String token) {
+    public Mono<Void> deleteByIds(List<Long> capabilityIds, String token) {
         return Mono.defer(() -> {
-            if (ids == null || ids.isEmpty()) {
+            if (capabilityIds == null || capabilityIds.isEmpty()) {
                 return Mono.error(new DomainException(
                         DomainErrorCode.VALIDATION_ERROR,
                         DomainErrorMessages.DELETE_IDS_REQUIRED
                 ));
             }
 
-            return iCapabilityPersistencePort.findTechnologyIdsByCapabilityIds(ids)
+            return iCapabilityPersistencePort.findTechnologyIdsByCapabilityIds(capabilityIds)
                     .collectList()
-                    .flatMap(technologyIds ->
-                            executeLocalSoftDelete(ids)
-                                    .then(Mono.defer(() -> callRemoteDeleteTechnology(ids, technologyIds, token)))
-                    );
-        }).onErrorMap(throwable -> {
-            if (throwable instanceof DomainException) {
-                return throwable;
+                    .flatMap(technologyIds -> updateCapabilityStatus(capabilityIds, false)
+                            .then(Mono.defer(() -> callRemoteDeleteTechnology(capabilityIds, technologyIds, token))));
+
+        }).onErrorMap(error -> {
+            if (error instanceof DomainException) {
+                return error;
             }
 
             return new DomainException(
@@ -47,21 +46,11 @@ public class CapabilityDeleteUseCase implements ICapabilityDeleteServicePort {
         });
     }
 
-    private Mono<Void> executeLocalSoftDelete(List<Long> capabilityIds) {
-        return iCapabilityPersistencePort.updateCapabilityTechnologiesStatusByCapabilityIds(capabilityIds, false)
-                .then(iCapabilityPersistencePort.updateCapabilitiesStatusByIds(capabilityIds, false))
-                .as(transactionalOperator::transactional);
-    }
 
     private Mono<Void> callRemoteDeleteTechnology(List<Long> capabilityIds, List<Long> technologyIds, String token) {
-
-        if (technologyIds.isEmpty()) {
-            return Mono.empty();
-        }
-
         return iTechnologyWebClientPort.deleteByIds(technologyIds, token)
                 .onErrorResume(throwable ->
-                        rollbackStatuses(capabilityIds)
+                        updateCapabilityStatus(capabilityIds, true)
                                 .then(Mono.error(new DomainException(
                                         DomainErrorCode.INTERNAL_ERROR,
                                         DomainErrorMessages.CAPABILITY_DELETE_ROLLBACK_ERROR
@@ -69,9 +58,9 @@ public class CapabilityDeleteUseCase implements ICapabilityDeleteServicePort {
                 );
     }
 
-    private Mono<Void> rollbackStatuses(List<Long> capabilityIds) {
-        return iCapabilityPersistencePort.updateCapabilityTechnologiesStatusByCapabilityIds(capabilityIds, true)
-                .then(iCapabilityPersistencePort.updateCapabilitiesStatusByIds(capabilityIds, true))
+    private Mono<Void> updateCapabilityStatus(List<Long> capabilityIds, Boolean status) {
+        return iCapabilityPersistencePort.updateCapabilityTechnologiesStatusByCapabilityIds(capabilityIds, status)
+                .then(Mono.defer(() -> iCapabilityPersistencePort.updateCapabilitiesStatusByIds(capabilityIds, status)))
                 .as(transactionalOperator::transactional);
     }
 }

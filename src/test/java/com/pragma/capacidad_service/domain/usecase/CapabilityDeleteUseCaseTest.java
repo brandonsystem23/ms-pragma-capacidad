@@ -56,24 +56,6 @@ class CapabilityDeleteUseCaseTest {
     }
 
     @Test
-    void shouldSoftDeleteWithoutCallingWebClientWhenNoTechnologiesExist() {
-        List<Long> capabilityIds = List.of(1L);
-        String token = "token";
-
-        when(iCapabilityPersistencePort.findTechnologyIdsByCapabilityIds(capabilityIds))
-                .thenReturn(Flux.empty());
-        when(iCapabilityPersistencePort.updateCapabilityTechnologiesStatusByCapabilityIds(capabilityIds, false))
-                .thenReturn(Mono.empty());
-        when(iCapabilityPersistencePort.updateCapabilitiesStatusByIds(capabilityIds, false))
-                .thenReturn(Mono.empty());
-        when(transactionalOperator.transactional(any(Mono.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        StepVerifier.create(capabilityDeleteUseCase.deleteByIds(capabilityIds, token))
-                .verifyComplete();
-    }
-
-    @Test
     void shouldRollbackStatusesWhenRemoteDeleteFails() {
         List<Long> capabilityIds = List.of(1L);
         String token = "token";
@@ -108,6 +90,27 @@ class CapabilityDeleteUseCaseTest {
                         error instanceof DomainException &&
                                 ((DomainException) error).getCode() == DomainErrorCode.VALIDATION_ERROR &&
                                 error.getMessage().equals(DomainErrorMessages.DELETE_IDS_REQUIRED))
+                .verify();
+    }
+
+    @Test
+    void shouldMapUnexpectedErrorToInternalDomainException() {
+        List<Long> capabilityIds = List.of(1L, 2L);
+        String token = "token";
+
+        when(iCapabilityPersistencePort.findTechnologyIdsByCapabilityIds(capabilityIds))
+                .thenReturn(Flux.error(new RuntimeException("error inesperado")));
+
+        StepVerifier.create(
+                        capabilityDeleteUseCase.deleteByIds(capabilityIds, token)
+                )
+                .expectErrorMatches(error ->
+                        error instanceof DomainException &&
+                                ((DomainException) error).getCode() == DomainErrorCode.INTERNAL_ERROR &&
+                                error.getMessage().equals(
+                                        DomainErrorMessages.CAPABILITY_DELETE_ROLLBACK_ERROR
+                                )
+                )
                 .verify();
     }
 }

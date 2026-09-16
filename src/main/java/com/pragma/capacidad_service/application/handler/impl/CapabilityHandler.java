@@ -73,7 +73,7 @@ public class CapabilityHandler implements ICapabilityHandler {
     }
 
     @Override
-    public Mono<Void> deleteByIds(List<Long> ids, String token) {
-        return iCapabilityDeleteServicePort.deleteByIds(ids, token);
+    public Mono<Void> deleteByIds(List<Long> capabilityIds, String token) {
+        return iCapabilityDeleteServicePort.deleteByIds(capabilityIds, token);
     }
 }

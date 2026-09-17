@@ -4,6 +4,7 @@ package com.pragma.capacidad_service.domain.validation.capability;
 import com.pragma.capacidad_service.domain.exception.DomainErrorCode;
 import com.pragma.capacidad_service.domain.exception.DomainErrorMessages;
 import com.pragma.capacidad_service.domain.exception.DomainException;
+import com.pragma.capacidad_service.domain.model.FilterValues;
 import com.pragma.capacidad_service.domain.model.command.CapabilityCommand;
 import com.pragma.capacidad_service.domain.model.command.CapabilityPageCommand;
 import com.pragma.capacidad_service.domain.validation.MaxTechnologiesValidator;
@@ -14,6 +15,9 @@ import java.util.HashSet;
 import java.util.List;
 
 public class DomainCapabilityValidator {
+
+    private static final int NUMBER_PAGE_ZERO = 0;
+    private static final int SIZE_ITEMS_ZERO = 0;
 
     public void validateUserCommand(CapabilityCommand command) {
 
@@ -45,28 +49,28 @@ public class DomainCapabilityValidator {
 
     public void validatePagination(CapabilityPageCommand command) {
 
-        if (command.page() < 0) {
+        if (command.page() < NUMBER_PAGE_ZERO) {
             throw new DomainException(
                     DomainErrorCode.INVALID_PAGE,
                     DomainErrorMessages.INVALID_PAGE
             );
         }
 
-        if (command.size() <= 0) {
+        if (command.size() <= SIZE_ITEMS_ZERO) {
             throw new DomainException(
                     DomainErrorCode.INVALID_SIZE,
                     DomainErrorMessages.INVALID_SIZE
             );
         }
 
-        if (!List.of("name", "numberTechnologies").contains(command.sortBy())) {
+        if (!List.of(FilterValues.NAME, FilterValues.NUMBER_TECHNOLOGIES).contains(command.sortBy().toLowerCase())) {
             throw new DomainException(
                     DomainErrorCode.INVALID_SORT_BY,
                     DomainErrorMessages.INVALID_SORT_BY
             );
         }
 
-        if (!List.of("asc", "desc").contains(command.direction().toLowerCase())) {
+        if (!List.of(FilterValues.ASCENDING, FilterValues.DESCENDING).contains(command.direction().toLowerCase())) {
             throw new DomainException(
                     DomainErrorCode.INVALID_DIRECTION,
                     DomainErrorMessages.INVALID_DIRECTION

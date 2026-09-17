@@ -1,5 +1,6 @@
 package com.pragma.capacidad_service.application.handler.impl;
 
+import com.pragma.capacidad_service.application.dto.request.CapabilityFilterDto;
 import com.pragma.capacidad_service.application.dto.request.CapabilityRequest;
 import com.pragma.capacidad_service.application.dto.response.CapabilityListItemResponse;
 import com.pragma.capacidad_service.application.dto.response.CapabilityResponse;
@@ -25,6 +26,7 @@ import reactor.test.StepVerifier;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -160,6 +162,9 @@ class CapabilityHandlerTest {
                 ))
                 .build();
 
+        CapabilityFilterDto capabilityFilterDto = new CapabilityFilterDto(0, 10, "name", "asc");
+        CapabilityPageCommand capabilityPageCommand = new CapabilityPageCommand(0, 10, "name", "asc");
+
         when(iCapabilityRetrieveServicePort.getCapabilities(
                 new CapabilityPageCommand(0, 10, "name", "asc"),
                 token
@@ -168,8 +173,10 @@ class CapabilityHandlerTest {
         when(capabilityDtoMapper.toListItemResponse(capability))
                 .thenReturn(itemResponse);
 
+        when(capabilityDtoMapper.toCommandPage(any())).thenReturn(capabilityPageCommand);
+
         StepVerifier.create(
-                        capabilityHandler.getCapabilities(0, 10, "name", "asc", token)
+                        capabilityHandler.getCapabilities(capabilityFilterDto, token)
                 )
                 .assertNext(response -> {
                     org.junit.jupiter.api.Assertions.assertEquals(1, response.content().size());
@@ -179,8 +186,8 @@ class CapabilityHandlerTest {
                     org.junit.jupiter.api.Assertions.assertEquals(1, response.totalPages());
                     org.junit.jupiter.api.Assertions.assertTrue(response.first());
                     org.junit.jupiter.api.Assertions.assertTrue(response.last());
-                    org.junit.jupiter.api.Assertions.assertEquals("Backend", response.content().get(0).name());
-                    org.junit.jupiter.api.Assertions.assertEquals(2, response.content().get(0).technologies().size());
+                    org.junit.jupiter.api.Assertions.assertEquals("Backend", response.content().getFirst().name());
+                    org.junit.jupiter.api.Assertions.assertEquals(2, response.content().getFirst().technologies().size());
                 })
                 .verifyComplete();
     }
@@ -194,8 +201,13 @@ class CapabilityHandlerTest {
                 token
         )).thenReturn(Mono.error(new RuntimeException("error listando capacidades")));
 
+        CapabilityFilterDto capabilityFilterDto = new CapabilityFilterDto(0, 10, "name", "asc");
+        CapabilityPageCommand capabilityPageCommand = new CapabilityPageCommand(0, 10, "name", "asc");
+
+        when(capabilityDtoMapper.toCommandPage(any())).thenReturn(capabilityPageCommand);
+
         StepVerifier.create(
-                        capabilityHandler.getCapabilities(0, 10, "name", "asc", token)
+                        capabilityHandler.getCapabilities(capabilityFilterDto, token)
                 )
                 .expectErrorMatches(error ->
                         error instanceof RuntimeException &&

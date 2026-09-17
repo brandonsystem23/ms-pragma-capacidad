@@ -1,5 +1,6 @@
 package com.pragma.capacidad_service.application.mapper;
 
+import com.pragma.capacidad_service.application.dto.request.CapabilityFilterDto;
 import com.pragma.capacidad_service.application.dto.request.CapabilityRequest;
 import com.pragma.capacidad_service.application.dto.response.CapabilityListItemResponse;
 import com.pragma.capacidad_service.application.dto.response.CapabilityResponse;
@@ -7,6 +8,7 @@ import com.pragma.capacidad_service.application.dto.response.TechnologyBasicResp
 import com.pragma.capacidad_service.domain.model.Capability;
 import com.pragma.capacidad_service.domain.model.Technology;
 import com.pragma.capacidad_service.domain.model.command.CapabilityCommand;
+import com.pragma.capacidad_service.domain.model.command.CapabilityPageCommand;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -24,4 +26,6 @@ public interface CapabilityDtoMapper {
     CapabilityListItemResponse toListItemResponse(Capability capability);
 
     TechnologyBasicResponse toTechnologyBasicResponse(Technology technology);
+
+    CapabilityPageCommand toCommandPage(CapabilityFilterDto dto);
 }

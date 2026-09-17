@@ -113,4 +113,80 @@ class CapabilityDeleteUseCaseTest {
                 )
                 .verify();
     }
+
+    @Test
+    void shouldRetryRollbackWhenRollbackFails() {
+        List<Long> capabilityIds = List.of(1L);
+        String token = "token";
+
+        when(iCapabilityPersistencePort.findTechnologyIdsByCapabilityIds(capabilityIds))
+                .thenReturn(Flux.just(10L));
+
+        when(iCapabilityPersistencePort.updateCapabilityTechnologiesStatusByCapabilityIds(
+                capabilityIds, false))
+                .thenReturn(Mono.empty());
+
+        when(iCapabilityPersistencePort.updateCapabilitiesStatusByIds(
+                capabilityIds, false))
+                .thenReturn(Mono.empty());
+
+        when(iTechnologyWebClientPort.deleteByIds(
+                List.of(10L), token))
+                .thenReturn(Mono.error(new RuntimeException("Error remoto")));
+
+        when(iCapabilityPersistencePort.updateCapabilityTechnologiesStatusByCapabilityIds(
+                capabilityIds, true))
+                .thenReturn(Mono.error(new RuntimeException("Error rollback")));
+
+        when(transactionalOperator.transactional(any(Mono.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        StepVerifier.create(
+                        capabilityDeleteUseCase.deleteByIds(capabilityIds, token)
+                )
+                .expectErrorMatches(error ->
+                        error instanceof DomainException &&
+                                ((DomainException) error).getCode() == DomainErrorCode.INTERNAL_ERROR
+                )
+                .verify();
+    }
+
+    @Test
+    void shouldReturnRollbackErrorAfterExhaustingRetries() {
+        List<Long> capabilityIds = List.of(1L);
+        String token = "token";
+
+        when(iCapabilityPersistencePort.findTechnologyIdsByCapabilityIds(capabilityIds))
+                .thenReturn(Flux.just(10L));
+
+        when(iCapabilityPersistencePort.updateCapabilityTechnologiesStatusByCapabilityIds(
+                capabilityIds, false))
+                .thenReturn(Mono.empty());
+
+        when(iCapabilityPersistencePort.updateCapabilitiesStatusByIds(
+                capabilityIds, false))
+                .thenReturn(Mono.empty());
+
+        when(iTechnologyWebClientPort.deleteByIds(List.of(10L), token))
+                .thenReturn(Mono.error(new RuntimeException("Error remoto")));
+
+        when(iCapabilityPersistencePort.updateCapabilityTechnologiesStatusByCapabilityIds(
+                capabilityIds, true))
+                .thenReturn(Mono.error(new RuntimeException("Error rollback")));
+
+        when(transactionalOperator.transactional(any(Mono.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        StepVerifier.create(
+                        capabilityDeleteUseCase.deleteByIds(capabilityIds, token)
+                )
+                .expectErrorMatches(error ->
+                        error instanceof DomainException &&
+                                ((DomainException) error).getCode() == DomainErrorCode.INTERNAL_ERROR &&
+                                error.getMessage().equals(
+                                        DomainErrorMessages.ROLLBACK_ERROR
+                                )
+                )
+                .verify();
+    }
 }

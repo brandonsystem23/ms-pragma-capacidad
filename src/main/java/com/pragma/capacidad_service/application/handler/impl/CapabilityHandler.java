@@ -1,5 +1,6 @@
 package com.pragma.capacidad_service.application.handler.impl;
 
+import com.pragma.capacidad_service.application.dto.request.CapabilityFilterDto;
 import com.pragma.capacidad_service.application.dto.request.CapabilityRequest;
 import com.pragma.capacidad_service.application.dto.response.CapabilityListItemResponse;
 import com.pragma.capacidad_service.application.dto.response.CapabilityResponse;
@@ -36,10 +37,10 @@ public class CapabilityHandler implements ICapabilityHandler {
     }
 
     @Override
-    public Mono<PagedCapabilityResponse> getCapabilities(int page, int size, String sortBy, String direction,
+    public Mono<PagedCapabilityResponse> getCapabilities(CapabilityFilterDto filter,
                                                          String token) {
 
-        CapabilityPageCommand command = new CapabilityPageCommand(page, size, sortBy, direction);
+        CapabilityPageCommand command = capabilityDtoMapper.toCommandPage(filter);
 
         return iCapabilityRetrieveServicePort
                 .getCapabilities(command, token)

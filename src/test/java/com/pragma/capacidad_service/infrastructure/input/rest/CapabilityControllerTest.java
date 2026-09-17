@@ -1,5 +1,6 @@
 package com.pragma.capacidad_service.infrastructure.input.rest;
 
+import com.pragma.capacidad_service.application.dto.request.CapabilityFilterDto;
 import com.pragma.capacidad_service.application.dto.request.CapabilityRequest;
 import com.pragma.capacidad_service.application.dto.response.CapabilityListItemResponse;
 import com.pragma.capacidad_service.application.dto.response.CapabilityResponse;
@@ -155,22 +156,18 @@ class CapabilityControllerTest {
                 .last(true)
                 .build();
 
-        when(iCapabilityHandler.getCapabilities(0, 10, "name", "asc", token))
+        CapabilityFilterDto capabilityFilterDto = new CapabilityFilterDto(0, 10, "name", "asc");
+
+        when(iCapabilityHandler.getCapabilities(capabilityFilterDto, token))
                 .thenReturn(Mono.just(response));
 
         StepVerifier.create(
                         capabilityController.getCapabilities(
-                                authorizationHeader,
-                                0,
-                                10,
-                                "name",
-                                "asc"
+                                authorizationHeader,capabilityFilterDto
                         )
                 )
                 .expectNext(response)
                 .verifyComplete();
-
-        verify(iCapabilityHandler).getCapabilities(0, 10, "name", "asc", token);
     }
 
     @Test
@@ -178,16 +175,15 @@ class CapabilityControllerTest {
         String authorizationHeader = "Bearer token";
         String token = "token";
 
-        when(iCapabilityHandler.getCapabilities(0, 10, "name", "asc", token))
+        CapabilityFilterDto capabilityFilterDto = new CapabilityFilterDto(0, 10, "name", "asc");
+
+        when(iCapabilityHandler.getCapabilities(capabilityFilterDto, token))
                 .thenReturn(Mono.error(new RuntimeException("error listando capacidades")));
 
         StepVerifier.create(
                         capabilityController.getCapabilities(
                                 authorizationHeader,
-                                0,
-                                10,
-                                "name",
-                                "asc"
+                                capabilityFilterDto
                         )
                 )
                 .expectErrorMatches(error ->
@@ -196,7 +192,6 @@ class CapabilityControllerTest {
                 )
                 .verify();
 
-        verify(iCapabilityHandler).getCapabilities(0, 10, "name", "asc", token);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.pragma.capacidad_service.infrastructure.input.rest;
 
+import com.pragma.capacidad_service.application.dto.request.CapabilityFilterDto;
 import com.pragma.capacidad_service.application.dto.request.CapabilityRequest;
 import com.pragma.capacidad_service.application.dto.response.CapabilityListItemResponse;
 import com.pragma.capacidad_service.application.dto.response.CapabilityResponse;
@@ -44,16 +45,13 @@ public class CapabilityController {
     @Operation(summary = "Listar capacidades", description = "Listar capacidades paginadas. Requiere rol ADMINISTRADOR")
     public Mono<PagedCapabilityResponse> getCapabilities(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "name") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction
+            @ModelAttribute CapabilityFilterDto filter
     ) {
-        log.info("Solicitud para listar capacidades");
+        log.info("Solicitud para listar capacidades. Página: {}, Tamaño: {}", filter.page(), filter.size());
 
         String token = UtilTokenExtractor.extract(authorizationHeader);
 
-        return iCapabilityHandler.getCapabilities(page, size, sortBy, direction, token);
+        return iCapabilityHandler.getCapabilities(filter, token);
     }
 
     @PostMapping("/exists-by-ids")

@@ -19,6 +19,9 @@ import static reactor.netty.http.HttpConnectionLiveness.log;
 @RequiredArgsConstructor
 public class CapabilityDeleteUseCase implements ICapabilityDeleteServicePort {
 
+    private static final int NUMBER_RETRY = 3;
+    private static final int SECONDS_BEFORE_RETRY = 2;
+
     private final ICapabilityPersistencePort iCapabilityPersistencePort;
     private final ITechnologyWebClientPort iTechnologyWebClientPort;
     private final TransactionalOperator transactionalOperator;
@@ -55,7 +58,7 @@ public class CapabilityDeleteUseCase implements ICapabilityDeleteServicePort {
         return iTechnologyWebClientPort.deleteByIds(technologyIds, token)
                 .onErrorResume(throwable ->
                         updateCapabilityStatus(capabilityIds, true)
-                                .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(2))
+                                .retryWhen(Retry.fixedDelay(NUMBER_RETRY, Duration.ofSeconds(SECONDS_BEFORE_RETRY))
                                         .doBeforeRetry(retrySignal ->
                                                 log.warn("Falló el rollback para las capcidades {}. Reintento #{} debido a: {}",
                                                         capabilityIds,

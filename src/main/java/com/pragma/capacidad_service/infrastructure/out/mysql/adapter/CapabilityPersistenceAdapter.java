@@ -1,6 +1,7 @@
 package com.pragma.capacidad_service.infrastructure.out.mysql.adapter;
 
 import com.pragma.capacidad_service.domain.model.Capability;
+import com.pragma.capacidad_service.domain.model.FilterValues;
 import com.pragma.capacidad_service.domain.model.PagedResult;
 import com.pragma.capacidad_service.domain.model.Technology;
 import com.pragma.capacidad_service.domain.spi.ICapabilityPersistencePort;
@@ -45,11 +46,11 @@ public class CapabilityPersistenceAdapter implements ICapabilityPersistencePort 
         long offset = (long) page * size;
 
         Flux<CapabilityEntity> capabilities = switch (sortBy.toLowerCase()) {
-            case "name" -> "desc".equalsIgnoreCase(direction)
+            case FilterValues.NAME -> FilterValues.DESCENDING.equalsIgnoreCase(direction)
                     ? iCapabilityRepository.findAllOrderByNameDesc(size, offset)
                     : iCapabilityRepository.findAllOrderByNameAsc(size, offset);
 
-            case "numbertechnologies" -> "desc".equalsIgnoreCase(direction)
+            case FilterValues.NUMBER_TECHNOLOGIES -> FilterValues.DESCENDING.equalsIgnoreCase(direction)
                     ? iCapabilityRepository.findAllOrderByTechnologyCountDesc(size, offset)
                     : iCapabilityRepository.findAllOrderByTechnologyCountAsc(size, offset);
 
